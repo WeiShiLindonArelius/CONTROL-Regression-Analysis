@@ -711,7 +711,7 @@ def double_elim_16(t, r1_thresh=55, r2_thresh=70, r3_thresh=90, r4_thresh=125, f
     return champ, out7, out6, out5, out4[0], out4[1], out3[0], out3[1], out2[0], out2[1], out2[2], out2[3], out1[0], out1[1], out1[2], out1[3]
 
 
-def double_elim_8(t,r1_thresh=75, r2_thresh=85, r3_thresh=100, r4_thresh=150, final_thresh=200, upset_list = None, upset_count = None, region = None):
+def double_elim_8(t,r1_thresh=50, r2_thresh=65, r3_thresh=80, r4_thresh=100, final_thresh=150, upset_list = None, upset_count = None, region = None):
     out_1 = []
     out_2 = []
 
@@ -880,7 +880,7 @@ def league_season(TEAMS,use_saved=False,season_count=-1,final_reversed=True,regi
         playoff_one = [one, two, three, four, five, six, seven, eight]
 
         eighth, seventh, sixth, fifth, fourth, third, second, champ = double_elim_8(
-            playoff_one,upset_list=upset_list,upset_count=upset_count,region=region) if region == 'Universal' else double_elim_8(playoff_one, 45, 55, 65, 75, 90,upset_list=upset_list,upset_count=upset_count,region=region)
+            playoff_one,upset_list=upset_list,upset_count=upset_count,region=region) if region == 'Universal' else double_elim_8(playoff_one,upset_list=upset_list,upset_count=upset_count,region=region)
 
 
 
@@ -890,7 +890,7 @@ def league_season(TEAMS,use_saved=False,season_count=-1,final_reversed=True,regi
         relegation_standings = None
         playoff_standings = [champ, second, third, fourth, fifth, sixth, seventh, eighth]
     elif post_range == 16 or post_range == 14 or chain_range:
-        relegation_standings = list(double_elim_16(relegation_chain, r1_thresh=170, r2_thresh=200, r3_thresh=225, r4_thresh=250, final_thresh=300, is_relegation=True,upset_list=upset_list,upset_count=upset_count,region=region))
+        relegation_standings = list(double_elim_16(relegation_chain, r1_thresh=80, r2_thresh=95, r3_thresh=115, r4_thresh=150, final_thresh=200, is_relegation=True,upset_list=upset_list,upset_count=upset_count,region=region))
     if chain_range:
         for i in [0,1]:
             relegation_standings[i].history[season_count] += f" {ordinal_string(i+15)} in Relegation Tournament -> UNI Playoffs."
@@ -911,7 +911,7 @@ def league_season(TEAMS,use_saved=False,season_count=-1,final_reversed=True,regi
 
 
         playoff_one = list(postseason)
-        champ, second, third, fourth, fifth, sixth, seventh, eighth, ninth, tenth, eleventh, twelfth, thirteenth, fourteenth, fifteenth, sixteenth = double_elim_16(postseason, 210, 270, 400, 500, 750,upset_list=upset_list,upset_count=upset_count,region=region)
+        champ, second, third, fourth, fifth, sixth, seventh, eighth, ninth, tenth, eleventh, twelfth, thirteenth, fourteenth, fifteenth, sixteenth = double_elim_16(postseason, 180, 210, 300, 400, 500,upset_list=upset_list,upset_count=upset_count,region=region)
         playoff_standings = [champ, second, third, fourth, fifth, sixth, seventh, eighth, ninth, tenth, eleventh, twelfth, thirteenth, fourteenth, fifteenth, sixteenth]
         for team in playoff_one:
             team.accolades['Universal-Playoffs'] += 1
