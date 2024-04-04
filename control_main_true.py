@@ -15,6 +15,9 @@ from statistics import mean
 from collections import OrderedDict
 import re
 from openpyxl import load_workbook
+import sys
+
+
 
 #main begins on line 309, and the first season begins on line 468
 #to change manual/auto team sorting, line 480 change manual=
@@ -484,41 +487,72 @@ def main():
                                      region='Darkwing Regional', stats_list=dw_stats_list,upset_list=upset_list,upset_count=upset_count, champ_list=champ_list)
             dw_qualified = dw_teams[:9]
 
-
+            sys.stdout.flush()
+            time.sleep(3)
+            sys.stdout.flush()
+            
             print(Fore.GREEN + "SHINING CORE REGION, " + Fore.RESET, end='')
             sc_teams = league_season(sc_teams, False, season_count=season_count, final_reversed=False,
                                      region='Shining-Core Regional', stats_list=sc_stats_list,upset_list=upset_list,upset_count=upset_count, champ_list=champ_list)
             sc_qualified = sc_teams[:9]
+
+            sys.stdout.flush()
+            time.sleep(3)
+            sys.stdout.flush()
 
             print(Fore.GREEN + "DIAMOND SEA REGION, " + Fore.RESET, end='')
             ds_teams = league_season(ds_teams, False, season_count=season_count, final_reversed=False,
                                      region='Diamond-Sea Regional', stats_list=ds_stats_list,upset_list=upset_list,upset_count=upset_count, champ_list=champ_list)
             ds_qualified = ds_teams[:9]
 
+            sys.stdout.flush()
+            time.sleep(3)
+            sys.stdout.flush()
+
             print(Fore.GREEN + "WEB OF NATIONS, " + Fore.RESET, end='')
             wof_teams = league_season(wof_teams, False, season_count=season_count, final_reversed=False,
                                       region='Web-of-Nations Regional', stats_list=wof_stats_list,upset_list=upset_list,upset_count=upset_count, champ_list=champ_list)
             wof_qualified = wof_teams[:9]
+
+            sys.stdout.flush()
+            time.sleep(3)
+            sys.stdout.flush()
 
             print(Fore.GREEN + "ICE WALL REGION, " + Fore.RESET, end='')
             iw_teams = league_season(iw_teams, False, season_count=season_count, final_reversed=False,
                                      region='Ice-Wall Regional', stats_list=iw_stats_list,upset_list=upset_list,upset_count=upset_count, champ_list=champ_list)
             iw_qualified = iw_teams[:9]
 
+            sys.stdout.flush()
+            time.sleep(3)
+            sys.stdout.flush()
+
             print(Fore.GREEN + "CANDYLAND REGION, " + Fore.RESET, end='')
             cl_teams = league_season(cl_teams, False, season_count=season_count, final_reversed=False,
                                      region='Candyland Regional', stats_list=cl_stats_list,upset_list=upset_list,upset_count=upset_count, champ_list=champ_list)
             cl_qualified = cl_teams[:9]
+
+            sys.stdout.flush()
+            time.sleep(3)
+            sys.stdout.flush()
 
             print(Fore.GREEN + "HELL'S CIRCLE, " + Fore.RESET, end='')
             hc_teams = league_season(hc_teams, False, season_count=season_count, final_reversed=False,
                                      region="Hell's-Circle Regional", stats_list=hc_stats_list,upset_list=upset_list,upset_count=upset_count, champ_list=champ_list)
             hc_qualified = hc_teams[:9]
 
+            sys.stdout.flush()
+            time.sleep(3)
+            sys.stdout.flush()
+
             print(Fore.GREEN + "STEEL HEART REGION, " + Fore.RESET, end='')
             sh_teams = league_season(sh_teams, False, season_count=season_count, final_reversed=False,
                                      region="Steel-Heart Regional", stats_list=sh_stats_list,upset_list=upset_list,upset_count=upset_count, champ_list=champ_list)
             sh_qualified = sh_teams[:9]
+
+            sys.stdout.flush()
+            time.sleep(3)
+            sys.stdout.flush()
 
             dw_champ = dw_qualified[0]
             regional_champs.append(dw_champ)
