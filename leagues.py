@@ -829,12 +829,12 @@ def league_season(TEAMS,use_saved=False,season_count=-1,final_reversed=True,regi
 
     if region == 'Universal':
         if chain_range:
-            postseason, relegation_chain = round_robin(TEAMS, r=9, qualify_range=post_range, alt_qualify_range=chain_range)
+            postseason, relegation_chain = round_robin(TEAMS, r=5, qualify_range=post_range, alt_qualify_range=chain_range)
         else:
-            postseason = round_robin(TEAMS, 4, qualify_range=post_range)
+            postseason = round_robin(TEAMS, 2, qualify_range=post_range)
             relegation_chain = None
     else:
-        postseason = round_robin(TEAMS, 2, qualify_range=post_range)
+        postseason = round_robin(TEAMS, 1, qualify_range=post_range)
         relegation_chain = None
 
     for team in TEAMS:
