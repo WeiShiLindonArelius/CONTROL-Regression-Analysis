@@ -1,5 +1,6 @@
 How do I play CONTROL?
 - Open the Codespace miniature zebra
+- Open the file **control_main_true.py**
 - Click the three lines in the top left
 - Click run without debugging
 - Watch it unfold in front of you!
