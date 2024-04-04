@@ -101,7 +101,7 @@ def team_season_dataframe(teams, season_no):
     for team in teams:
         team_stats_df = pd.concat([team_stats_df, weighted_averages(team)])
 
-    path = "C:/Users/carte/OneDrive/Documents/ControlAverageStats.xlsx"
+    path = "ControlAverageStats.xlsx"
 
     with pd.ExcelWriter(path, engine='openpyxl') as writer:
         team_stats_df.to_excel(writer, sheet_name='TeamWeightedAverages', index=False)
@@ -400,8 +400,8 @@ def main():
     clear_file('champs')
     clear_file('error_output')
 
-    clear_file('C:/Users/carte/OneDrive/Documents/PlayerSeasons.xlsx', excel=True)
-    clear_file("C:/Users/carte/OneDrive/Documents/ControlAverageStats.xlsx", excel=True)
+    clear_file('PlayerSeasons.xlsx', excel=True)
+    clear_file("ControlAverageStats.xlsx", excel=True)
 
     my_team_count = 5
 

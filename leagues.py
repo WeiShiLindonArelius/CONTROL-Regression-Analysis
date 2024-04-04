@@ -68,7 +68,7 @@ def team_season_dataframe(teams, season_no = -1):
                                               'Health', 'Spawn Time', 'Lineup Wins', 'Lineup Losses',
                                               'Match Wins', 'Match Losses', 'Match Draws'])
 
-    path = "C:/Users/carte/OneDrive/Documents/ControlAverageStats.xlsx"
+    path = "ControlAverageStats.xlsx"
     team_stats_df = pd.read_excel(path)
 
     try:
