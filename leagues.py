@@ -937,7 +937,7 @@ def league_season(TEAMS,use_saved=False,season_count=-1,final_reversed=True,regi
 
     print(Fore.RED + f"{champ.name} have won the {region} League." + Fore.RESET)
 
-    sleep(8 if region == "Universal" and season_count != 0 else 0.5)
+    sleep(8 if region == "Universal" and season_count != 0 else 1.5)
 
     if ninth and tenth:
         play_in_standings = [ninth, tenth]
