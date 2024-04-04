@@ -655,8 +655,6 @@ def main():
 
         void_draft = []
 
-        #if the new uni play in fucks things up, go back to 8:22PM 03/16/2024
-
         for i in range(5): #seeds 1 through 5 who clinch universal league
             g1_advance.append(g1_pre_advance[i])
             uni_teams.append(g1_advance[i])
@@ -860,7 +858,7 @@ def main():
             print(Fore.GREEN + f"{upi_g12W.name} advance\n{upi_g12L.name} eliminated" + Fore.RESET)
             advanced_play_in.append(upi_g12W)
             elim_play_in.append(upi_g12L)
-            print(Fore.RED + "END OF UNIVERSAL PLAY-IN" + Fore.RESET)
+        print(Fore.RED + "END OF UNIVERSAL PLAY-IN" + Fore.RESET)
 
         for temp in [5,6,7,8,9,10]:
             if g1_advance[temp] not in elim_play_in:
