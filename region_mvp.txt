@@ -1,0 +1,238 @@
+Darkwing Regional S1 MVP
+A^1_Quinn (for S1_House-of-Achlys_Angelkin)
+Not Drafted (Intro) (this is their 0 season).
+(Darkwing Regional Regular Season)
+Season Grade: 18.615
+Games Played: 336 (42 matches)
+Kills Per Game: 1.723 (Avg 0.647)
+Deaths Per Game: 0.920 (Avg 0.647)
+Damage Dealt Per Game: 1125.801 (Avg 421.197)
+Damage Mitigated Per Game: 30.336 (Avg 16.247)
+Total Effect Per Game: 5157.333 (Avg 3336.787)
+Overkill Effect Per Game: 700.071 (Avg 235.292)
+Best Kill Streak: 7
+
+Shining-Core Regional S1 MVP
+S_Orion (for S1_Shining-Core_Alchemists)
+Not Drafted (Intro) (this is their 0 season).
+(Shining-Core Regional Regular Season)
+Season Grade: 29.192
+Games Played: 336 (42 matches)
+Kills Per Game: 2.256 (Avg 0.657)
+Deaths Per Game: 0.881 (Avg 0.657)
+Damage Dealt Per Game: 1512.314 (Avg 426.446)
+Damage Mitigated Per Game: 21.980 (Avg 16.742)
+Total Effect Per Game: 5137.167 (Avg 3311.764)
+Overkill Effect Per Game: 1152.565 (Avg 238.232)
+Best Kill Streak: 8
+
+Diamond-Sea Regional S1 MVP
+S_Freya (for S1_Diamond-Sea_Trolls)
+Not Drafted (Intro) (this is their 0 season).
+(Diamond-Sea Regional Regular Season)
+Season Grade: 23.111
+Games Played: 336 (42 matches)
+Kills Per Game: 1.955 (Avg 0.634)
+Deaths Per Game: 0.899 (Avg 0.634)
+Damage Dealt Per Game: 1277.601 (Avg 410.272)
+Damage Mitigated Per Game: 33.592 (Avg 16.013)
+Total Effect Per Game: 5317.455 (Avg 3345.549)
+Overkill Effect Per Game: 765.295 (Avg 217.187)
+Best Kill Streak: 7
+
+Web-of-Nations Regional S1 MVP
+A_Gunnar (for S1_Web-of-Nations_Gravity)
+Not Drafted (Intro) (this is their 0 season).
+(Web-of-Nations Regional Regular Season)
+Season Grade: 16.831
+Games Played: 336 (42 matches)
+Kills Per Game: 1.479 (Avg 0.628)
+Deaths Per Game: 0.905 (Avg 0.628)
+Damage Dealt Per Game: 910.307 (Avg 404.647)
+Damage Mitigated Per Game: 23.238 (Avg 15.979)
+Total Effect Per Game: 5263.170 (Avg 3327.192)
+Overkill Effect Per Game: 445.337 (Avg 218.799)
+Best Kill Streak: 6
+
+Ice-Wall Regional S1 MVP
+A_Felicity (for S1_Ice-Wall_Djinni)
+Not Drafted (Intro) (this is their 0 season).
+(Ice-Wall Regional Regular Season)
+Season Grade: 21.582
+Games Played: 336 (42 matches)
+Kills Per Game: 1.756 (Avg 0.627)
+Deaths Per Game: 0.899 (Avg 0.627)
+Damage Dealt Per Game: 1049.714 (Avg 408.351)
+Damage Mitigated Per Game: 12.873 (Avg 16.584)
+Total Effect Per Game: 5223.000 (Avg 3361.673)
+Overkill Effect Per Game: 525.657 (Avg 225.985)
+Best Kill Streak: 8
+
+Candyland Regional S1 MVP
+S_Ellis (for S1_House-of-Achlys_Vampires)
+Not Drafted (Intro) (this is their 0 season).
+(Candyland Regional Regular Season)
+Season Grade: 20.87
+Games Played: 336 (42 matches)
+Kills Per Game: 2.030 (Avg 0.656)
+Deaths Per Game: 0.929 (Avg 0.656)
+Damage Dealt Per Game: 1356.604 (Avg 421.927)
+Damage Mitigated Per Game: 32.247 (Avg 16.896)
+Total Effect Per Game: 5017.982 (Avg 3332.72)
+Overkill Effect Per Game: 910.134 (Avg 222.336)
+Best Kill Streak: 8
+
+Hell's-Circle Regional S1 MVP
+S_Orion (for S1_Hell's-Circle_Manticore)
+Not Drafted (Intro) (this is their 0 season).
+(Hell's-Circle Regional Regular Season)
+Season Grade: 23.816
+Games Played: 336 (42 matches)
+Kills Per Game: 2.042 (Avg 0.631)
+Deaths Per Game: 0.887 (Avg 0.631)
+Damage Dealt Per Game: 1408.993 (Avg 408.931)
+Damage Mitigated Per Game: 22.194 (Avg 16.244)
+Total Effect Per Game: 5173.089 (Avg 3346.148)
+Overkill Effect Per Game: 970.711 (Avg 222.139)
+Best Kill Streak: 9
+
+Steel-Heart Regional S1 MVP
+A^1_Mason (for S1_Steel-Heart_Inferno)
+Not Drafted (Intro) (this is their 0 season).
+(Steel-Heart Regional Regular Season)
+Season Grade: 22.501
+Games Played: 336 (42 matches)
+Kills Per Game: 1.699 (Avg 0.61)
+Deaths Per Game: 0.914 (Avg 0.61)
+Damage Dealt Per Game: 1043.330 (Avg 392.787)
+Damage Mitigated Per Game: 18.764 (Avg 15.055)
+Total Effect Per Game: 5442.223 (Avg 3358.266)
+Overkill Effect Per Game: 589.210 (Avg 210.441)
+Best Kill Streak: 7
+
+Universal S1 MVP
+S_Orion (for S1_Shining-Core_Alchemists)
+Not Drafted (Intro) (this is their 0 season).
+(Universal Regular Season)
+Season Grade: 23.606
+Games Played: 2520 (315 matches)
+Kills Per Game: 2.254 (Avg 0.695)
+Deaths Per Game: 0.956 (Avg 0.695)
+Damage Dealt Per Game: 1525.662 (Avg 450.537)
+Damage Mitigated Per Game: 34.463 (Avg 17.738)
+Total Effect Per Game: 5080.933 (Avg 3313.867)
+Overkill Effect Per Game: 1172.054 (Avg 253.271)
+Best Kill Streak: 10
+
+Darkwing Regional S2 MVP
+S_Calla (for S2_Darkwing_Angelkin)
+Not Drafted (Intro) (this is their 1st season).
+(Darkwing Regional Regular Season)
+Season Grade: 19.925
+Games Played: 336 (42 matches)
+Kills Per Game: 1.726 (Avg 0.683)
+Deaths Per Game: 0.976 (Avg 0.683)
+Damage Dealt Per Game: 1274.356 (Avg 513.081)
+Damage Mitigated Per Game: 26.242 (Avg 24.166)
+Total Effect Per Game: 5572.967 (Avg 3393.666)
+Overkill Effect Per Game: 758.364 (Avg 327.24)
+Best Kill Streak: 8
+
+Shining-Core Regional S2 MVP
+S^3.3_Wren (for S2_Shining-Core_Imps)
+Drafted 5th in the S1 Shining-Core draft (this is their 0 season).
+(Shining-Core Regional Regular Season)
+Season Grade: 25.128
+Games Played: 336 (42 matches)
+Kills Per Game: 2.295 (Avg 0.701)
+Deaths Per Game: 0.940 (Avg 0.701)
+Damage Dealt Per Game: 1865.167 (Avg 533.189)
+Damage Mitigated Per Game: 60.381 (Avg 24.823)
+Total Effect Per Game: 5200.167 (Avg 3364.624)
+Overkill Effect Per Game: 1821.231 (Avg 344.727)
+Best Kill Streak: 10
+
+Diamond-Sea Regional S2 MVP
+S^3.47_Keegan (for S2_Diamond-Sea_Ogres)
+Drafted 5th in the S1 Second Round draft (this is their 0 season).
+(Diamond-Sea Regional Regular Season)
+Season Grade: 26.11
+Games Played: 336 (42 matches)
+Kills Per Game: 2.089 (Avg 0.696)
+Deaths Per Game: 0.887 (Avg 0.696)
+Damage Dealt Per Game: 1767.879 (Avg 531.613)
+Damage Mitigated Per Game: 51.588 (Avg 25.629)
+Total Effect Per Game: 5411.318 (Avg 3374.237)
+Overkill Effect Per Game: 1600.791 (Avg 346.484)
+Best Kill Streak: 9
+
+Web-of-Nations Regional S2 MVP
+S^4.03_Zara (for S2_**Web-of-Nations_Phoenixes**)
+Drafted 3rd in the S1 Second Round draft (this is their 0 season).
+(Web-of-Nations Regional Regular Season)
+Season Grade: 31.175
+Games Played: 336 (42 matches)
+Kills Per Game: 2.655 (Avg 0.71)
+Deaths Per Game: 0.932 (Avg 0.71)
+Damage Dealt Per Game: 2129.723 (Avg 542.567)
+Damage Mitigated Per Game: 52.802 (Avg 25.396)
+Total Effect Per Game: 5481.557 (Avg 3350.329)
+Overkill Effect Per Game: 1912.139 (Avg 367.37)
+Best Kill Streak: 10
+
+Ice-Wall Regional S2 MVP
+S^2.0_Una (for S2_Ice-Wall_Vampires)
+Drafted 9th in the S1 Ice-Wall draft (this is their 0 season).
+(Ice-Wall Regional Regular Season)
+Season Grade: 28.257
+Games Played: 336 (42 matches)
+Kills Per Game: 2.417 (Avg 0.694)
+Deaths Per Game: 0.875 (Avg 0.694)
+Damage Dealt Per Game: 1837.379 (Avg 520.627)
+Damage Mitigated Per Game: 47.949 (Avg 24.863)
+Total Effect Per Game: 5006.964 (Avg 3401.14)
+Overkill Effect Per Game: 1332.556 (Avg 333.981)
+Best Kill Streak: 8
+
+Candyland Regional S2 MVP
+S^3.47_Jocelyn (for S2_Candyland_Devils)
+Drafted 1st in the S1 Second Round draft (this is their 0 season).
+(Candyland Regional Regular Season)
+Season Grade: 34.305
+Games Played: 336 (42 matches)
+Kills Per Game: 2.818 (Avg 0.714)
+Deaths Per Game: 0.860 (Avg 0.714)
+Damage Dealt Per Game: 2484.121 (Avg 536.859)
+Damage Mitigated Per Game: 96.337 (Avg 24.974)
+Total Effect Per Game: 5485.595 (Avg 3382.512)
+Overkill Effect Per Game: 2758.183 (Avg 332.871)
+Best Kill Streak: 12
+
+Hell's-Circle Regional S2 MVP
+S^3.93_Vesper (for S2_Hell's-Circle_Shapeshifters)
+Drafted 38th in the S1 Second Round draft (this is their 0 season).
+(Hell's-Circle Regional Regular Season)
+Season Grade: 25.078
+Games Played: 336 (42 matches)
+Kills Per Game: 2.256 (Avg 0.711)
+Deaths Per Game: 0.890 (Avg 0.711)
+Damage Dealt Per Game: 1778.199 (Avg 538.627)
+Damage Mitigated Per Game: 76.015 (Avg 25.229)
+Total Effect Per Game: 5039.357 (Avg 3371.057)
+Overkill Effect Per Game: 1532.898 (Avg 337.906)
+Best Kill Streak: 10
+
+Steel-Heart Regional S2 MVP
+S^4.67_Brennan (for S2_Steel-Heart_Sphinxes)
+Drafted 10th in the S1 Third Round draft (this is their 0 season).
+(Steel-Heart Regional Regular Season)
+Season Grade: 31.893
+Games Played: 336 (42 matches)
+Kills Per Game: 2.557 (Avg 0.715)
+Deaths Per Game: 1.042 (Avg 0.715)
+Damage Dealt Per Game: 2252.924 (Avg 538.65)
+Damage Mitigated Per Game: 73.600 (Avg 26.398)
+Total Effect Per Game: 5159.009 (Avg 3382.084)
+Overkill Effect Per Game: 2722.776 (Avg 370.739)
+Best Kill Streak: 10
+
