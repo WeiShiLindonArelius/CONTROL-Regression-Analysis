@@ -18,33 +18,7 @@ from openpyxl import load_workbook
 import sys
 
 
-
-#main begins on line 309, and the first season begins on line 468
-#to change manual/auto team sorting, line 480 change manual=
-
-#done make it so that teams who miss the playoffs in the region have the option to replace two players
-# if there is a better option left in the draft pool
-# after the first draft, all teams who missed the regional playoffs and teams who made it to the
-# pre-qualifying tournament or further the previous season will have a second draft pick
-# if there is a player in the draft list better than one of their players (based on xWAR) they draft them
-# teams from all regions select from one massive draft class called secondary
-# teams that miss the playoffs will be put into one pool and shuffled, and teams who made PQ or further will be
-# shuffled in another pool. the missed_playoffs pool will select first.
-
-#teams will have a trait called second_pick naturally set to False but set to true if they miss the regional playoffs
-#or make it to the pre-qualifier or universal qualifier
-#after all the first drafts are over, I will run second_draft() with a list of all teams who have second_pick == True
-
-#idea: regulate player statistics to "per 50" statistics which will stay proportional to lower and higher game lengths
-#a season with a game length of 25 ticks should have all stats (kills pg, damage pg, deaths pg, etc.) multiplied by 2
-#Every season object must have a value for the length (in ticks) of the games played in this season
-#Player seasons are generated from player values, so every player must have a game_length stat
-#because the game length stat originates from game(), I can make it so that every player who plays a game has their game_length
-#stat set to the length of the game. this will result in redundant code, so I can add a check for this
-
-#GLOBAL VARIABLES
 avg_stats_df = pd.DataFrame(columns=['Kills', 'Deaths', 'Damage', 'Effect', 'Overkill', 'Mitigated'])
-
 
 def weighted_averages(team):  # takes in a team and calculates weighted average of each stat, returns a dataframe
     #despite being called weighted_averages, this produces a full dataframe for a team season
