@@ -123,11 +123,11 @@ def sort_all_players(leagues, manual):
             grade_players(team.players, is_team=True)
             if team.mine:
                 enablePrint()
-                print(f"Here is the current order of your players ({team.name}):" + Fore.RESET)
-                i = 0
-                for player in team.players:
-                    print(f"Slot {i}, {player}")
-                    i += 1
+                #print(f"Here is the current order of your players ({team.name}):" + Fore.RESET)
+                #i = 0
+                #for player in team.players:
+                #    print(f"Slot {i}, {player}")
+                #    i += 1
                 if manual:
                     while True:
                         user_choice = input(Fore.BLUE + "Would you like to move anything? If not, press N.\n"
@@ -406,7 +406,7 @@ def main():
     clear_file('PlayerSeasons.xlsx', excel=True)
     clear_file("ControlAverageStats.xlsx", excel=True)
 
-    my_team_count = 5
+    my_team_count = 3
 
     SEASONS = 20
 
@@ -476,6 +476,7 @@ def main():
             my_team = choice(chance)
             my_team.make_mine()
             print('\n' + Fore.BLUE + f"{my_team.name} is your team.")
+        time.sleep(1.5)
         print(Fore.RESET)
 
     def regional_leagues(dw_teams,sc_teams,ds_teams,wof_teams,iw_teams,cl_teams,hc_teams,sh_teams,season_count,champ_list):
