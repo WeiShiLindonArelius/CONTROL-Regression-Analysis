@@ -55,7 +55,7 @@
 **How do CONTROL games and matches actually work?**
 - CONTROL is a game fundamentally based on random number generation (RNG). Teams have 6 players, each with the following statistics: Power, Attack Damage, Attack Speed, Critical Chance, Critical Multiplier, Max Health, and Spawn Time.
 - Individual games are played between lineups of 4 players. Each team has 8 main lineups, the 8 best unique 4-man lineups from their roster, plus a 9th for tiebreaker situtations.
-- The process of an individual game is invisible, but here is roughly how it goes.
+- The process of an individual game is invisible, but here is roughly how it goes. (full code in Games.py)
   - Each team is randomly assigned "+" or "-" which determines their impact on the TESSERACT.
   - Games take 104 "ticks", each tick goes through every living player and does a number of things
   - The TESSERACT, the value around which the result of the game is determined, is adjusted by the player's Power. Positive for the + team, Negative for the - team.
@@ -69,12 +69,13 @@ FOOTNOTES
 *Semi-flexible margin of victory: each play-in, playoff, or tournament series has an initial margin of victory that one team must cross. If Team A hits the limit of 50 wins, but the score is 50-49, the series goes on,
                                  but only for so long. After a certain amount of games, determined by a function within the best_of function in Games.py, the margin of victory will decrease. This is done so that series 
                                  between very close teams do not drag on, and after a while one team is able to win by a very slim margin of victory. To preserve the accuracy of playoff series, this does not happen very often,
-                                 but a failsafe is triggered in emergencies.
+                                 but a failsafe is triggered in emergencies. 
 
 **Returned chance is the p-value of a binomial test testing if there is a significant difference between the winrate of the winning team and 0.50. When the winning team dominates, it returns 0 or an absurdly low number.
+                 Function is called series_test() within stat_functions.py
 
 ***Draft Protocol: ...
 
 ****xWAR: Calculated in grade_players() in leagues.py (xWAR coefficients were calculated by a personal experiment, will summarize soon
 
-*****Tier: Players are created by functions s_tier(), a_tier(), b_tier() and c_tier(), which generate random statistics in ranges different for each Tier.
+*****Tier: Players are created by functions s_tier(), a_tier(), b_tier() and c_tier(), which generate random statistics in ranges different for each Tier. Functions in Player_Creator.py
