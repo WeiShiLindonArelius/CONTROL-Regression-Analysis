@@ -1,6 +1,6 @@
 **How do I play CONTROL?**
 - Create and open your Codespace.
-- pip install requirements.txt *** UNFINISHED
+- Go to the Terminal; after the $ sign, type 'pip install -r requirements.txt'.
 - Open the file **control_main_true.py**
 - Click the three lines in the top left
 - Click run without debugging
