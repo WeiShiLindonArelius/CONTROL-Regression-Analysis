@@ -1,13 +1,14 @@
 from Games import best_of, enablePrint, blockPrint
 from contests import round_robin, chain
-from Player_Creator import s_tier, a_tier, b_tier, c_tier
-from random import choice, randint, uniform, choices
+from Player_Creator import s_tier, a_tier, b_tier, c_tier, slasher, undead
+from random import choice, randint, uniform, choices, seed
+from seed import generate_seed
 from colorama import Fore, Back
 # from dump_pickle import dump_pkl
 from load_pickle import load_pkl, season_wipe
 from numpy import mean
 from Players import calculate_standard_deviation, PlayerSeason, grade_seasons
-from stat_functions import region_mvp
+from stat_functions import region_mvp, write_to_file
 from time import sleep
 import pandas as pd
 import math
@@ -63,10 +64,6 @@ def weighted_averages(team, season_no=-1):  # takes in a team and calculates wei
 def team_season_dataframe(teams, season_no = -1):
     #writes the average team player innate stats and their season record to a file
     #despite the name, this takes in a list of teams and writes them out after making a DF
-
-    team_stats_df = pd.DataFrame(columns=['Team', 'Season', 'Power', 'Attack Damage', 'Attack Speed', 'Critical %', 'Critical X',
-                                              'Health', 'Spawn Time', 'Lineup Wins', 'Lineup Losses',
-                                              'Match Wins', 'Match Losses', 'Match Draws'])
 
     path = "ControlAverageStats.xlsx"
     team_stats_df = pd.read_excel(path)
@@ -221,8 +218,14 @@ def grade_players(players, is_team=None):
         for word in ['Power', 'Attack Damage', 'Attack Speed', 'Critical-X', 'Critical-PCT', 'Health', 'Spawn']:
             player.grade_dict[word] = round(player.grade_dict[word], 2)
 
+        slash_bonus = (2*player.crit_pct)*pos_xWAR_coefficient['.001 Critical Chance']+(4*player.crit_x)*pos_xWAR_coefficient['.1 Critical Multiplier'] if player.trait_tag == '$l' else 0
+
+        undead_bonus = (player.max_health * player.undead_chance)*pos_xWAR_coefficient['1 Health'] if player.trait_tag == 'U-' else 0
+
+        reflector_bonus = (5*player.crit_pct)*pos_xWAR_coefficient['.001 Critical Chance']+(0.5*player.crit_x)*pos_xWAR_coefficient['.1 Critical Multiplier'] if player.trait_tag == 'R#' else 0
+
         player.xWAR = round((player.grade_dict['Power'] + player.grade_dict['Attack Damage'] + player.grade_dict['Attack Speed']
-        + player.grade_dict['Critical-X'] + player.grade_dict['Critical-PCT'] + player.grade_dict['Health'] + player.grade_dict['Spawn']), 2)
+        + player.grade_dict['Critical-X'] + player.grade_dict['Critical-PCT'] + player.grade_dict['Health'] + player.grade_dict['Spawn']), 2) + slash_bonus + undead_bonus + reflector_bonus
 
     players.sort(key=lambda pl: pl.xWAR, reverse=True)
     rank_index = 0
@@ -233,20 +236,21 @@ def grade_players(players, is_team=None):
 
 
 def user_draft(teams, season_count, is_regional=False, void=False, second = False,
-               draft_name='Default', league_season_stats= None, auto_mine = True, third = False):
+               draft_name='Default', league_season_stats= None, auto_mine = True, third = False,write_draft = False):
 
     #league_season_stats will import the season stats from the league in which the draft is being held,
     #so that I can import it into grade_player_seasons to grade the seasons of my players in relation to
     #the rest of the league they are in
-
-    from random import uniform
+    #this functionality ONLY matters if I am drafting my own players, which I don't care about doing
+    #this is disabled as of 11/02/2024
+    seed(generate_seed())
     number = -1
     with open('draft_history', 'w') as bruh:
         bruh.write('')
     draft_class = {}
     if not is_regional and not void: #universal draft
         for i in [0,1]:
-            add = s_tier(round(uniform(2,6),2))
+            add = s_tier(round(uniform(2,6),2), pre_reflect=(uniform(0,0.125)))
             add.team = i
             draft_class[i] = add
         for i in [2,3,4,5,6,7,8]:
@@ -261,20 +265,28 @@ def user_draft(teams, season_count, is_regional=False, void=False, second = Fals
             add = b_tier(round(uniform(2,5.5),2))
             add.team = i
             draft_class[i] = add
-        for i in [17,30]:
+        for i in [17,30,35,36]:
             add = b_tier(randint(3,6))
             add.team = i
             draft_class[i] = add
         for i in [18,19,20,21,22,23,25,26,27]:
-            add = c_tier(round(uniform(2,7),2))
+            add = c_tier(round(uniform(3,6),2), pre_reflect=(uniform(0.25,0.75)))
             add.team = i
             draft_class[i] = add
         for i in [24]:
-            add = c_tier(randint(1,8))
+            add = c_tier(randint(1,8), pre_reflect=1)
+            add.team = i
+            draft_class[i] = add
+        for i in [28, 29, 30, 31, 32, 33, 34]:
+            add = slasher(round(uniform(0,3.25), 2))
+            add.team = i
+            draft_class[i] = add
+        for i in [37, 38, 39, 40, 41, 42]:
+            add = undead(round(uniform(0,3.25), 2))
             add.team = i
             draft_class[i] = add
     elif is_regional and not void: #regional draft
-        for i in [25,26,27,28,29,30]:
+        for i in [27,28,29,30]:
             add = s_tier(round(uniform(1,5),1))
             add.team = i
             draft_class[i] = add
@@ -282,27 +294,48 @@ def user_draft(teams, season_count, is_regional=False, void=False, second = Fals
             add = a_tier(round(uniform(1,6),2))
             add.team = i
             draft_class[i] = add
-        for i in [10,11,12,13,14,15,16,17,18,19,20]:
+        for i in [7,8,9,10,11,12,13,14,15]:
             add = b_tier(round(uniform(1,6),2))
             add.team = i
             draft_class[i] = add
-        for i in [21,22,23,24,7,8,9]:
-            add = c_tier(round(uniform(1,7),2))
+        for i in [16,17,18,19,20]:
+            add = c_tier(round(uniform(1, 7), 2))
             add.team = i
             draft_class[i] = add
-    elif void:
+        for i in [21,22,23,24,25,26]:
+            add = slasher(round(uniform(1, 2.5), 2))
+            add.team = i
+            draft_class[i] = add
+        for i in [31, 32, 33, 34, 35, 36]:
+            add = undead(round(uniform(0,1.25), 2))
+            add.team = i
+            draft_class[i] = add
+    elif void: #void draft
         for i in range(len(teams)):
-            if i%2 == 0:
-                add = b_tier(round(randint(10000,60000)/10000, 2))
+            if i%3 == 0:
+                add = b_tier(round(randint(10000,60000)/10000, 2), pre_reflect=(uniform(0,0.15)))
+            elif i%3 == 1:
+                add = a_tier(round(randint(10000,60000)/10000, 2), pre_reflect=(uniform(0,0.125)))
             else:
-                add = a_tier(round(randint(10000,60000)/10000, 2))
+                add = c_tier(round(uniform(2, 7), 2), pre_reflect=(uniform(0.25,0.95)))
+                add.team = i
+                draft_class[i] = add
             add.team = i
             draft_class[i] = add
         for i in range(6):
-            add = s_tier(round(randint(10000,60000)/10000, 2))
-            add.team = i
-            draft_class[i] = add
-    if second:
+            add = s_tier(round(randint(10000,60000)/10000, 2), pre_reflect=(uniform(0.01,0.05)))
+            add.team = i+len(teams)
+            draft_class[(i+len(teams))] = add
+        for i in range(6,14):
+            add = slasher(round(uniform(1.25,2.75), 2))
+            add.team = i+len(teams)
+            draft_class[(i+len(teams))] = add
+        for i in range(10):
+            add = undead(round(uniform(0.5,3), 2))
+            add.team = i+len(teams)
+            draft_class[(i+len(teams))] = add
+
+    if second: #second round
         #104 teams miss regional playoffs (second_pick == 1)
         # up to 64 teams (but never close to 64) could be second_pick == 2
         # so draft_class should be 104 good players and 64 decent players
@@ -335,12 +368,20 @@ def user_draft(teams, season_count, is_regional=False, void=False, second = Fals
             add = a_tier(6.25)
             add.team = i
             draft_class[i] = add
+        for i in [(base+29), (base+30), (base+31), (base+32), (base+33)]:
+            add = slasher(round(uniform(1.25,3), 2))
+            add.team = i
+            draft_class[i] = add
+        for i in [(base+34), (base+35), (base+36), (base+37), (base+38)]:
+            add = undead(round(uniform(0.5,3.5), 2))
+            add.team = i
+            draft_class[i] = add
 
         for team in teams:
             team.second_pick = 0
             for player in team.players:
                 second_all_players.append(player)
-    elif third:
+    elif third: #third round
         third_all_players = []
 
         for team in teams:
@@ -348,38 +389,47 @@ def user_draft(teams, season_count, is_regional=False, void=False, second = Fals
             for player in team.players:
                 third_all_players.append(player)
 
-        base = len(teams) + 18
+        base = len(teams) + 25
         for i in range(base):
-            if i%4 == 0:
+            if i%6 == 0:
                 coin = choice([True, False])
                 if coin:
                     add = s_tier(round(uniform(3.0,6.0), 2))
                 else:
                     add = c_tier(round(uniform(2.0,7.0), 2))
-            if i%4 == 1:
+            elif i%6 == 1:
                 coin = choice([True, False, False])
                 if coin:
                     add = s_tier(round(uniform(3.0, 6.0), 2))
                 else:
                     add = b_tier(round(uniform(1.5, 5.5), 2))
-            if i%4 == 2:
+            elif i%6 == 2:
                 coin = choice([True, False, False, False])
                 if coin:
                     add = s_tier(round(uniform(3.0, 6.0), 2))
                 else:
                     add = a_tier(round(uniform(2.0, 5.0), 2))
-            if i%4 == 3:
+            elif i%6 == 3:
                 coin = choice([True, False, False, False, False])
                 if coin:
                     add = s_tier(round(uniform(3.5, 6.5), 2))
                 else:
                     add = s_tier(round(uniform(1.0, 5.0), 2))
+            elif i%6 == 4:
+                add = slasher(round(uniform(0,2.5), 2))
+            elif i%6 == 5:
+                add = undead(round(uniform(0,2)))
+            else:
+                #should never happen, just wanted to get rid of error message
+                add = undead(round(uniform(0,2)))
             #ignore error
             add.team = i
             draft_class[i] = add
 
 
     p = draft_class.copy()
+    #not sure why this is an if/else block, but I don't want to mess with it
+    #players in the draft class are graded here and given a grade_dict['Rank']
     if second:
         #ignore
         temp_players = list(p.values()) + second_all_players
@@ -399,19 +449,19 @@ def user_draft(teams, season_count, is_regional=False, void=False, second = Fals
     p = dict(sorted(p.items(), key=lambda plyr: plyr[1].xWAR, reverse=True))
 
     for i in range(len(teams)):
-        with open('draft_list', 'w', buffering=10) as f:
-            f.write(f"{draft_name}")
-        with open('draft_list', 'a', buffering=10) as f:
 
-            f.write(f" {len(p.values())} of {len(draft_class)} players remaining.\n")
-            for player in p.values():
-                f.write('\n')
-                f.write('\n')
-                f.write(str(player))
-                f.write('\n')
+        if write_draft and i == 0:
+            with open('draft_list', 'w', buffering=10) as f:
+                f.write(f"{draft_name}")
+            with open('draft_list', 'a', buffering=10) as f:
 
-        with open('draft_history', 'a') as x:
-            x.write(f"{i+1}. {teams[i].name} to select.\n")
+                f.write(f" {len(p.values())} of {len(draft_class)} players remaining.\n")
+                for player in p.values():
+                    f.write('\n')
+                    f.write('\n')
+                    f.write(str(player))
+                    f.write('\n')
+
         grade_players(teams[i].players)
         if teams[i].mine and not auto_mine: # make sure to keep auto_mine on because this has not been updated to work
             enablePrint()
@@ -448,22 +498,24 @@ def user_draft(teams, season_count, is_regional=False, void=False, second = Fals
                 terminate = int(input("Choose 0, 1, 2, or 3."))
             index = int(input("Choose player index to draft."))
             try:
-                draft(p[index], teams[i], index=i, season_count=season_count, void=void, repl=terminate)
+                draft(p[index], teams[i], index=i, season_count=season_count, repl=terminate, draft_name=draft_name)
             except KeyError:
                 print("Index unavailable. Options are:",end=' ')
                 for key in p.keys():
                     print(key,end=', ')
                 print('')
                 index = int(input("Choose player index to draft."))
-                draft(p[index], teams[i], index=i, season_count=season_count, void=void, repl=terminate)
+                draft(p[index], teams[i], index=i, season_count=season_count, repl=terminate, draft_name=draft_name)
             del p[index]
         else:
             players_in_class = list(p.values())
 
+            #create filler player to start
             top_player = s_tier()
             top_player.grade_dict['Rank'] = 1000
 
             for player in players_in_class:
+                #find player with best rank value and set them to top player which will be drafted
                 if player.grade_dict['Rank'] < top_player.grade_dict['Rank']:
                     top_player = player
 
@@ -472,50 +524,57 @@ def user_draft(teams, season_count, is_regional=False, void=False, second = Fals
             teams[i].players.sort(key=lambda pl: pl.xWAR, reverse=True)
             if second:
                 if teams[i].players[5].xWAR < top_player.xWAR:
-                    draft(p[index], teams[i], index=i, season_count=season_count, void=void, second=True)
+                    draft(p[index], teams[i], index=i, season_count=season_count, draft_name=draft_name)
                     del p[index]
                 else:
                     teams[i].history[season_count] += f"\tPassed Secondary pick.\n"
             elif third:
                 if teams[i].players[5].xWAR < top_player.xWAR:
                     try:
-                        draft(p[index], teams[i], index=i, season_count=season_count, void=void, third=True)
+                        draft(p[index], teams[i], index=i, season_count=season_count, draft_name=draft_name)
                         del p[index]
                     except KeyError:
                         pass
                 else:
                     teams[i].history[season_count] += f"\tPassed Tertiary pick.\n"
             else:
-                draft(p[index], teams[i], index=i, season_count=season_count, void=void)
-                del p[index]
+                if teams[i].players[5].xWAR < top_player.xWAR:
+                    draft(p[index], teams[i], index=i, season_count=season_count, draft_name=draft_name)
+                    del p[index]
+                else:
+                    teams[i].history[season_count] += f"\tPassed Draft pick.\n"
 
 
-def draft(player, team, index, season_count, repl=5, void=False, second=False, third=False):
-    if void:
-        team.region = 'Void'
+def draft(player, team, index, season_count, repl=5, draft_name="None"):
     # team.print_roster()
     old = team.players[repl]
     team.players[repl] = player
     player.team = team.name
-    if second:
+
+    if draft_name == "Secondary draft":
         player.drafted = f"Drafted {ordinal_string(index + 1)} in the S{season_count} Second Round draft"
-        team.history[season_count] += f"\tWith the {ordinal_string(index + 1)} pick in the Second Round draft, selected {player.name}" \
-                                      f" (Terminated {old.name})\n"
+        team.history[season_count] += f"\n\tWith the {ordinal_string(index + 1)} pick in the Second Round draft, selected {player.name}" \
+                                      f" (Terminated {old.name})"
         team.second_pick = 0
-    elif third:
+    elif draft_name == "Tertiary draft":
         player.drafted = f"Drafted {ordinal_string(index + 1)} in the S{season_count} Third Round draft"
         team.history[
-            season_count] += f"\tWith the {ordinal_string(index + 1)} pick in the Third Round draft, selected {player.name}" \
-                             f" (Terminated {old.name})\n"
+            season_count] += f"\n\tWith the {ordinal_string(index + 1)} pick in the Third Round draft, selected {player.name}" \
+                             f" (Terminated {old.name})"
         team.second_pick = 0
+    elif draft_name != "None":
+        player.drafted = f"Drafted {ordinal_string(index+1)} in the S{season_count} {draft_name}"
+        team.history[season_count] += f"\n\tWith the {ordinal_string(index+1)} pick in the {draft_name}, selected {player.name}" \
+                                      f" (Terminated {old.name})"
     else:
-        player.drafted = f"Drafted {ordinal_string(index+1)} in the S{season_count} {team.region} draft"
-        team.history[season_count] += f"\n\tWith the {ordinal_string(index+1)} pick in the {team.region} draft, selected {player.name}" \
-                                      f" (Terminated {old.name})\n"
-    with open('draft_history', 'a') as x:
-        x.write(f"{player.name} has been drafted to {team.name}\n{old.name} terminated.\n")
+        print("Catastrophic draft error.")
+        write_to_file(error=True, words=f"Draft error, S{season_count}: no draft name given.")
+
+    #with open('draft_history', 'a') as x:
+    #    x.write(f"{player.name} has been drafted to {team.name}\n{old.name} terminated.\n")
 
 def player_changes(teams, season_count=-1):
+        seed(generate_seed())
         def level_out(pl):
             level_age_factor = 1 - ((pl.age + 3) / 100)
             list_of_100 = [num for num in range(100)]
@@ -524,7 +583,7 @@ def player_changes(teams, season_count=-1):
                 pl.power = 62
             if pl.atk_spd < 6:
                 pl.atk_spd = 6
-            while pl.atk_dmg >= 77:
+            while pl.atk_dmg >= 80:
                 pl.atk_dmg = round(pl.atk_dmg * level_age_factor)
             while pl.max_health >= 999:
                 pl.max_health = round((pl.max_health * level_age_factor), 2)
@@ -545,6 +604,9 @@ def player_changes(teams, season_count=-1):
                 if breakout_coin == 100:
                     x_factor = choice([0.25, 0.3, 0.35])
                     team.history[season_count] += f"\n\tLOTTERY: {player.name} will have a breakout season!\n"
+                elif breakout_coin == 99:
+                    x_factor = choice([-0.25, -0.35, -0.45, -0.5])
+                    team.history[season_count] += f"\n\tWASHED: {player.name} will significantly decline this season.\n"
                 elif player.breakout:
                     x_factor = choice([0.2, 0.25, 0.3, 0.3, 0.35, 0.4])
                 else:
@@ -555,7 +617,11 @@ def player_changes(teams, season_count=-1):
                     age_factor.append(.437)
                 for i in range(500):
                     age_factor.append((.435 - (i/1000)))
-                tier_factor = {'S' : choice([-0.05, -0.025, -0.02, 0, 0.01]), 'A' : choice([0.02, -0.01, -0.01]), 'B' : choice([0.01, 0.01, -0.03]), 'C' : 0.05}
+                tier_factor = {'S' : choice([-0.05, -0.025, -0.02, 0, 0.01]), 'A' : choice([0.02, -0.01, -0.01]),
+                               'B' : choice([0.01, 0.01, -0.03]), 'C' : 0.05, '$l' : choice([-0.03,0.06]),
+                               'U-' : choice([-0.05,0.01,0.05])}
+                if player.tier not in tier_factor.keys():
+                    tier_factor[player.tier] = 0
                 t_factor = tier_factor[player.tier]*half_to_one(age_factor[player.age])
                 factor = age_factor[player.age] + t_factor + x_factor
                 coin = choice([True,False])
@@ -567,17 +633,90 @@ def player_changes(teams, season_count=-1):
                     player.crit_x = round(player.crit_x*factor, 3)
                 power_coin = uniform(0,2)
                 if factor > power_coin:
-                    p2_coin = choice([0,1,1,2])
+                    p2_coin = choice([0,-1,-1,1,1,1,1,1,2])
                     player.power += p2_coin
                 else:
-                    p2_coin = choice([0, -1, -1, -1, -2])
+                    p2_coin = choice([0,1,1,-1,-1,-1,-1,-1,-2,-3,-4])
                     player.power += p2_coin
 
 
                 player.crit_dmg = player.crit_x * player.atk_dmg
                 level_out(player)
 
-def double_elim_16(t, r1_thresh=55, r2_thresh=70, r3_thresh=90, r4_thresh=125, final_thresh=160, is_relegation=False, upset_list = None, upset_count = None, region = 'Universal'):
+
+def single_elim_16(t, r1_thresh=300, r2_thresh=350, r3_thresh=400, final_thresh=500, is_relegation=False, upset_list = None, upset_count = None, region = 'Universal', season_count=-1):
+
+
+    m1, m2, m3, mF = round(r1_thresh / 6) + 11, round(r2_thresh / 7) + 7, round(r3_thresh / 7) + 5, round(final_thresh / 10) + 21
+
+    one, two, three, four, five, six, seven, eight = t[0], t[1], t[2], t[3], t[4], t[5], t[6], t[7]
+    nine, ten, eleven, twelve, thirteen, fourteen, fifteen, sixteen = t[8], t[9], t[10], t[11], t[12], t[13], t[14], t[15]
+
+    one.seed, two.seed, three.seed, four.seed, five.seed, six.seed, seven.seed, eight.seed, nine.seed, ten.seed, eleven.seed, twelve.seed, thirteen.seed, fourteen.seed, fifteen.seed, sixteen.seed = 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
+    print(Fore.RED + "UNIVERSAL PLAYOFFS" + Fore.RESET)
+
+    print(Fore.GREEN + "ROUND ONE" + Fore.RESET)
+    context = f"S{season_count} Universal Round of 16"
+    w1, l1 = best_of(one, sixteen, r1_thresh, 10, True, m1, test_output=True, is_uni=not is_relegation,
+                     upset_list=upset_list, upset_count=upset_count, context=context)
+    w2, l2 = best_of(eight, nine, r1_thresh, 10, True, m1, test_output=True, is_uni=not is_relegation,
+                     upset_list=upset_list, upset_count=upset_count, context=context)
+    w3, l3 = best_of(five, twelve, r1_thresh, 10, True, m1, test_output=True, is_uni=not is_relegation,
+                     upset_list=upset_list, upset_count=upset_count, context=context)
+    w4, l4 = best_of(four, thirteen, r1_thresh, 10, True, m1, test_output=True, is_uni=not is_relegation,
+                     upset_list=upset_list, upset_count=upset_count, context=context)
+    w5, l5 = best_of(three, fourteen, r1_thresh, 10, True, m1, test_output=True, is_uni=not is_relegation,
+                     upset_list=upset_list, upset_count=upset_count, context=context)
+    w6, l6 = best_of(six, eleven, r1_thresh, 10, True, m1, test_output=True, is_uni=not is_relegation,
+                     upset_list=upset_list, upset_count=upset_count, context=context)
+    w7, l7 = best_of(seven, ten, r1_thresh, 10, True, m1, test_output=True, is_uni=not is_relegation,
+                     upset_list=upset_list, upset_count=upset_count, context=context)
+    w8, l8 = best_of(two, fifteen, r1_thresh, 10, True, m1, test_output=True, is_uni=not is_relegation,
+                     upset_list=upset_list, upset_count=upset_count, context=context)
+    out1 = sorted([l1, l2, l3, l4, l5, l6, l7, l8], key=lambda x: x.seed)
+
+    print(Fore.GREEN + "QUARTERFINALS" + Fore.RESET)
+    context = f"S{season_count} Universal Quarterfinals"
+
+    r2_actual = [w1, w2, w3, w4, w5, w6, w7, w8]
+    r2_seeded = r2_actual      #sorted([w1, w2, w3, w4, w5, w6, w7, w8], key=lambda x: x.seed) to sort by seed
+
+    w9, l9 = best_of(r2_seeded[0], r2_seeded[1], r2_thresh, 11, True, m2, test_output=True, is_uni=not is_relegation,
+                       upset_list=upset_list, upset_count=upset_count, context=context)
+    w10, l10 = best_of(r2_seeded[2], r2_seeded[3], r2_thresh, 11, True, m2, test_output=True, is_uni=not is_relegation,
+                       upset_list=upset_list, upset_count=upset_count, context=context)
+    w11, l11 = best_of(r2_seeded[4], r2_seeded[5], r2_thresh, 11, True, m2, test_output=True, is_uni=not is_relegation,
+                       upset_list=upset_list, upset_count=upset_count, context=context)
+    w12, l12 = best_of(r2_seeded[6], r2_seeded[7], r2_thresh, 11, True, m2, test_output=True, is_uni=not is_relegation,
+                       upset_list=upset_list, upset_count=upset_count, context=context)
+    out2 = sorted([l9, l10, l11, l12], key=lambda x: x.seed)
+
+    print(Fore.GREEN + "SEMIFINALS" + Fore.RESET)
+    context = f"S{season_count} Universal Semifinals"
+
+    r3_actual = [w9, w10, w11, w12]
+    r3_seeded = r3_actual  #sorted([w9, w10, w11, w12], key=lambda x: x.seed) to re-seed
+
+    w13, l13 = best_of(r3_seeded[0], r3_seeded[1], r3_thresh, 11, True, m3, test_output=True, is_uni=not is_relegation,
+                     upset_list=upset_list, upset_count=upset_count, context=context)
+    w14, l14 = best_of(r3_seeded[2], r3_seeded[3], r3_thresh, 11, True, m3, test_output=True, is_uni=not is_relegation,
+                       upset_list=upset_list, upset_count=upset_count, context=context)
+    out3 = sorted([l13, l14], key=lambda x: x.seed)
+
+    print(Fore.GREEN + "FINALS" + Fore.RESET)
+    context = f"S{season_count} Universal Finals"
+
+    champ, outFinal = best_of(w13, w14, final_thresh, 12, True, mF, test_output=True, is_uni=not is_relegation,
+                              upset_list=upset_list, upset_count=upset_count, context=context)
+
+    return champ, outFinal, out3[0], out3[1], out2[0], out2[1], out2[2], out2[3], out1[0], out1[1], out1[2], out1[3], out1[4], out1[5], out1[6], out1[7]
+
+
+
+
+
+
+def double_elim_16(t, r1_thresh=55, r2_thresh=70, r3_thresh=90, r4_thresh=125, final_thresh=160, is_relegation=False, upset_list = None, upset_count = None, region = 'Universal', season_count=-1):
 
     out1 = [0,0,0,0]
     out2 = [0,0,0,0]
@@ -602,7 +741,7 @@ def double_elim_16(t, r1_thresh=55, r2_thresh=70, r3_thresh=90, r4_thresh=125, f
         one.seed, two.seed, three.seed, four.seed, five.seed, six.seed, seven.seed, eight.seed, nine.seed, ten.seed, eleven.seed, twelve.seed, thirteen.seed, fourteen.seed, fifteen.seed, sixteen.seed = 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
         print(Fore.RED + "UNIVERSAL PLAYOFFS" + Fore.RESET)
     print(Fore.GREEN + "R1 winner bracket" + Fore.RESET)
-    context = f"R1W {region} "
+    context = f"S{season_count} R1W {region} "
     if is_relegation:
         context += "Relegation Tournament"
     else:
@@ -616,7 +755,7 @@ def double_elim_16(t, r1_thresh=55, r2_thresh=70, r3_thresh=90, r4_thresh=125, f
     w7, l7 = best_of(seven, ten, r1_thresh,10,True,m1,test_output=True,is_uni=not is_relegation,upset_list=upset_list,upset_count=upset_count,context=context)
     w8, l8 = best_of(two, fifteen, r1_thresh,10,True,m1,test_output=True,is_uni=not is_relegation,upset_list=upset_list,upset_count=upset_count,context=context)
     print(Fore.GREEN + "R1 loser bracket" + Fore.RESET)
-    context = f"R1L {region} "
+    context = f"S{season_count} R1L {region} "
     if is_relegation:
         context += "Relegation Tournament"
     else:
@@ -626,7 +765,7 @@ def double_elim_16(t, r1_thresh=55, r2_thresh=70, r3_thresh=90, r4_thresh=125, f
     w11, out1[2] = best_of(l5, l6, r1_thresh, 10, True,m1,test_output=True,is_uni=not is_relegation,upset_list=upset_list,upset_count=upset_count,context=context)
     w12, out1[3] = best_of(l7, l8, r1_thresh, 10, True,m1,test_output=True,is_uni=not is_relegation,upset_list=upset_list,upset_count=upset_count,context=context)
     print(Fore.GREEN + "R2 winner bracket" + Fore.RESET)
-    context = f"R2W {region} "
+    context = f"S{season_count} R2W {region} "
     if is_relegation:
         context += "Relegation Tournament"
     else:
@@ -636,7 +775,7 @@ def double_elim_16(t, r1_thresh=55, r2_thresh=70, r3_thresh=90, r4_thresh=125, f
     w15, l15 = best_of(w5, w6, r2_thresh, 11, True,m2,test_output=True,is_uni=not is_relegation,upset_list=upset_list,upset_count=upset_count,context=context)
     w16, l16 = best_of(w7, w8, r2_thresh, 11, True,m2,test_output=True,is_uni=not is_relegation,upset_list=upset_list,upset_count=upset_count,context=context)
     print(Fore.GREEN + "R2 loser bracket" + Fore.RESET)
-    context = f"R2L {region} "
+    context = f"S{season_count} R2L {region} "
     if is_relegation:
         context += "Relegation Tournament"
     else:
@@ -646,7 +785,7 @@ def double_elim_16(t, r1_thresh=55, r2_thresh=70, r3_thresh=90, r4_thresh=125, f
     w19, out2[2] = best_of(w11, l14, r2_thresh, 10, True,m2,test_output=True,is_uni=not is_relegation,upset_list=upset_list,upset_count=upset_count,context=context)
     w20, out2[3] = best_of(w12, l13, r2_thresh, 10, True,m2,test_output=True,is_uni=not is_relegation,upset_list=upset_list,upset_count=upset_count,context=context)
     print(Fore.GREEN + "R3 winner bracket" + Fore.RESET)
-    context = f"R3W {region} "
+    context = f"S{season_count} R3W {region} "
     if is_relegation:
         context += "Relegation Tournament"
     else:
@@ -654,7 +793,7 @@ def double_elim_16(t, r1_thresh=55, r2_thresh=70, r3_thresh=90, r4_thresh=125, f
     w21, l21 = best_of(w13, w14, r3_thresh, 12, True,m3,test_output=True,is_uni=not is_relegation,upset_list=upset_list,upset_count=upset_count,context=context)
     w22, l22 = best_of(w15, w16, r3_thresh, 12, True,m3,test_output=True,is_uni=not is_relegation,upset_list=upset_list,upset_count=upset_count,context=context)
     print(Fore.GREEN + "R3 loser bracket" + Fore.RESET)
-    context = f"R3L {region} "
+    context = f"S{season_count} R3L {region} "
     if is_relegation:
         context += "Relegation Tournament"
     else:
@@ -662,36 +801,40 @@ def double_elim_16(t, r1_thresh=55, r2_thresh=70, r3_thresh=90, r4_thresh=125, f
     w23, out3[0] = best_of(w17, w18, r3_thresh, 10, True,m3,test_output=True,is_uni=not is_relegation,upset_list=upset_list,upset_count=upset_count,context=context)
     w24, out3[1] = best_of(w19, w20, r3_thresh, 10, True,m3,test_output=True,is_uni=not is_relegation,upset_list=upset_list,upset_count=upset_count,context=context)
     print(Fore.GREEN + "R4 loser bracket" + Fore.RESET)
-    context = f"R4L {region} "
+    context = f"S{season_count} R4L {region} "
     if is_relegation:
         context += "Relegation Tournament"
     else:
         context += "Playoffs"
-    w25, out4[0] = best_of(w23, l21, r4_thresh, 10, True,m4,test_output=True,is_uni=not is_relegation,upset_list=upset_list,upset_count=upset_count,context=context)
-    w26, out4[1] = best_of(w24, l22, r4_thresh, 10, True,m4,test_output=True,is_uni=not is_relegation,upset_list=upset_list,upset_count=upset_count,context=context)
+
+    r4l = [l22, l21, w24, w23]
+    r4l_seeded = sorted(r4l, key= lambda x: x.seed)
+
+    w25, out4[0] = best_of(r4l_seeded[0], r4l_seeded[3], r4_thresh, 10, True,m4,test_output=True,is_uni=not is_relegation,upset_list=upset_list,upset_count=upset_count,context=context)
+    w26, out4[1] = best_of(r4l_seeded[1], r4l_seeded[2], r4_thresh, 10, True,m4,test_output=True,is_uni=not is_relegation,upset_list=upset_list,upset_count=upset_count,context=context)
     print(Fore.GREEN + "winner bracket finals" + Fore.RESET)
-    context = f"WB Finals {region} "
+    context = f"S{season_count} WB Finals {region} "
     if is_relegation:
         context += "Relegation Tournament"
     else:
         context += "Playoffs"
     w27, l27 = best_of(w21, w22, r4_thresh, 13, True,mF,test_output=True,is_uni=not is_relegation,upset_list=upset_list,upset_count=upset_count,context=context)
     print(Fore.GREEN + "loser bracket finals" + Fore.RESET)
-    context = f"LB Finals {region} "
+    context = f"S{season_count} LB Finals {region} "
     if is_relegation:
         context += "Relegation Tournament"
     else:
         context += "Playoffs"
     w28, out5 = best_of(w25, w26, r4_thresh, 10, True,mF,test_output=True,is_uni=not is_relegation,upset_list=upset_list,upset_count=upset_count,context=context)
     print(Fore.GREEN + "winner bracket finals LOSER vs loser bracket champ" + Fore.RESET)
-    context = f"WBFL v LBC {region} "
+    context = f"S{season_count} WBFL v LBC {region} "
     if is_relegation:
         context += "Relegation Tournament"
     else:
         context += "Playoffs"
     w29, out6 = best_of(w28, l27, r4_thresh, 13, True,mF,test_output=True,is_uni=not is_relegation,upset_list=upset_list,upset_count=upset_count,context=context)
     print(Fore.GREEN + "grand finals" + Fore.RESET)
-    context = f"Grand Finals {region} "
+    context = f"S{season_count} Grand Finals {region} "
     if is_relegation:
         context += "Relegation Tournament"
     else:
@@ -711,7 +854,7 @@ def double_elim_16(t, r1_thresh=55, r2_thresh=70, r3_thresh=90, r4_thresh=125, f
     return champ, out7, out6, out5, out4[0], out4[1], out3[0], out3[1], out2[0], out2[1], out2[2], out2[3], out1[0], out1[1], out1[2], out1[3]
 
 
-def double_elim_8(t,r1_thresh=50, r2_thresh=65, r3_thresh=80, r4_thresh=100, final_thresh=150, upset_list = None, upset_count = None, region = None):
+def double_elim_8(t,r1_thresh=75, r2_thresh=85, r3_thresh=100, r4_thresh=150, final_thresh=200, upset_list = None, upset_count = None, region = None, season_count=-1):
     out_1 = []
     out_2 = []
 
@@ -720,38 +863,38 @@ def double_elim_8(t,r1_thresh=50, r2_thresh=65, r3_thresh=80, r4_thresh=100, fin
     one, two, three, four, five, six, seven, eight = t[0], t[1], t[2], t[3], t[4], t[5], t[6], t[7]
     one.seed, two.seed, three.seed, four.seed, five.seed, six.seed, seven.seed, eight.seed = 1, 2, 3, 4, 5, 6, 7, 8
     print(Fore.GREEN + "R1 winner bracket" + Fore.RESET)
-    context = f"R1W {region} Playoffs"
+    context = f"S{season_count} R1W {region} Playoffs"
     w1, l1 = best_of(one, eight, r1_thresh,3, True,r1_margin, upset_list=upset_list,upset_count=upset_count,context=context)
     w2, l2 = best_of(four, five, r1_thresh,3,True,r1_margin, upset_list=upset_list,upset_count=upset_count,context=context)
     w3, l3 = best_of(three, six, r1_thresh,3,True,r1_margin, upset_list=upset_list,upset_count=upset_count,context=context)
     w4, l4 = best_of(two, seven, r1_thresh,3,True,r1_margin, upset_list=upset_list,upset_count=upset_count,context=context)
     print(Fore.GREEN + "R1 loser bracket" + Fore.RESET)
-    context = f"R1L {region} Playoffs"
+    context = f"S{season_count} R1L {region} Playoffs"
     w5, out_temp = best_of(l1, l2, r1_thresh, 3, True,r1_margin, upset_list=upset_list,upset_count=upset_count,context=context)
     out_1.append(out_temp)
     w6, out_temp = best_of(l3, l4, r1_thresh, 3, True,r1_margin, upset_list=upset_list,upset_count=upset_count,context=context)
     out_1.append(out_temp)
     print(Fore.GREEN + "R2 winner bracket" + Fore.RESET)
-    context = f"R2W {region} Playoffs"
+    context = f"S{season_count} R2W {region} Playoffs"
     w7, l7 = best_of(w1, w2, r2_thresh, 4, True,r2_margin, upset_list=upset_list,upset_count=upset_count,context=context)
     w8, l8 = best_of(w3, w4, r2_thresh, 4, True,r2_margin, upset_list=upset_list,upset_count=upset_count,context=context)
     print(Fore.GREEN + "R2 loser bracket" + Fore.RESET)
-    context = f"R2L {region} Playoffs"
+    context = f"S{season_count} R2L {region} Playoffs"
     w9, out_temp = best_of(w5, l8, r2_thresh, 4, True,r2_margin, upset_list=upset_list,upset_count=upset_count,context=context)
     out_2.append(out_temp)
     w10, out_temp = best_of(w6, l7, r2_thresh, 4, True,r2_margin, upset_list=upset_list,upset_count=upset_count,context=context)
     out_2.append(out_temp)
     print(Fore.GREEN + "winner bracket finals" + Fore.RESET)
-    context = f"WB Finals {region} Playoffs"
+    context = f"S{season_count} WB Finals {region} Playoffs"
     w11, l11 = best_of(w7, w8, r3_thresh, 5, True,r3_margin,test_output=True, upset_list=upset_list,upset_count=upset_count,context=context)
     print(Fore.GREEN + "loser bracket finals" + Fore.RESET)
-    context = f"LB Finals {region} Playoffs"
+    context = f"S{season_count} LB Finals {region} Playoffs"
     w12, out_final = best_of(w9, w10, r3_thresh, 5, True,r3_margin,test_output=True, upset_list=upset_list,upset_count=upset_count,context=context)
     print(Fore.GREEN + "winner bracket finals LOSER vs loser bracket champ" + Fore.RESET)
-    context = f"WBFL v LBC {region} Playoffs"
+    context = f"S{season_count} WBFL v LBC {region} Playoffs"
     w13, out_third = best_of(w12, l11, r4_thresh, 5, True,r4_margin,test_output=True, upset_list=upset_list,upset_count=upset_count,context=context)
     print(Fore.GREEN + "grand finals" + Fore.RESET)
-    context = f"Grand Finals {region} Playoffs"
+    context = f"S{season_count} Grand Finals {region} Playoffs"
     w14 = best_of(w11, w13, final_thresh, 6, False,final_margin,test_output=True, upset_list=upset_list,upset_count=upset_count,context=context)
     if w14 == w11:
         print(Fore.GREEN + f"{w14.name} are flawless." + Fore.RESET)
@@ -765,16 +908,46 @@ def double_elim_8(t,r1_thresh=50, r2_thresh=65, r3_thresh=80, r4_thresh=100, fin
     s = [out_1[1], out_1[0], out_2[1], out_2[0], out_final, out_third, runner_up, champ]
     return s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7]
 
-def swiss_format(teams, base_thresh, base_margin, win_thresh=3):
+def swiss_format(teams, base_thresh, base_margin, win_thresh=3, season_count=0):
     advanced = []
     eliminated = []
+
+    def parse_region_seed(team):
+        # Split the region_seed into letters and integer
+        region, seed = team.region_seed.split('-')
+        return region, int(seed)
+
+
     def round(wins, losses):
+        #note that 2 is the highest seed, and 8 is the lowest seed
+
         print(Fore.RED + f"ROUND ({wins},{losses})" + Fore.RESET)
         while len(league_records[(wins,losses)]) >= 2:
-            cont1 = choice(league_records[(wins, losses)])
+            round_thresh = base_thresh + (25*wins) + (10*losses)
+
+            remaining_seeds = [parse_region_seed(team)[1] for team in league_records[(wins,losses)]]
+            high_seed = min(remaining_seeds)
+            low_seed = max(remaining_seeds)
+            low_seed_teams = [team for team in league_records[(wins,losses)] if parse_region_seed(team)[1] == low_seed]
+            high_seed_teams = [team for team in league_records[(wins,losses)] if parse_region_seed(team)[1] == high_seed]
+
+            #new function should select random team of the highest remaining seed
+            #select opponent which is the lowest remaining seed not from the same region
+
+            cont1 = choice(high_seed_teams)
+            #randomly chooses team 1 from the group
             league_records[(wins, losses)].remove(cont1)
-            cont2 = choice(league_records[(wins, losses)])
-            winner, loser = best_of(cont1, cont2, base_thresh, amp=4, both_return=True, win_by=base_margin)
+            cont2 = choice(low_seed_teams)
+            for team in low_seed_teams:
+                if team.region != cont1.region:
+                    cont2 = team
+                    break
+                else:
+                    cont2 = choice(low_seed_teams)
+                    while cont2.name == cont1.name:
+                        cont2 = choice(low_seed_teams)
+            #randomly chooses team 2 from the group
+            winner, loser = best_of(cont1, cont2, round_thresh, amp=4, both_return=True, win_by=base_margin, context=f"S{season_count} Pre-Qualifying ({wins},{losses})")
             league_records[(wins, losses)].remove(cont2)
             if wins+1 < win_thresh:
                 league_records[(wins+1, losses)].append(winner)
@@ -813,36 +986,40 @@ def league_season(TEAMS,use_saved=False,season_count=-1,final_reversed=True,regi
 
     if use_saved:
         TEAMS = load_pkl()
-    if len(TEAMS) < 30:
-        post_range = 10
-        chain_range = None
-    elif len(TEAMS) >= 30:
+    if len(TEAMS) >= 30:
         post_range = 14
         chain_range = 16
-    else:
+    elif len(TEAMS) == 26:
+        post_range = 10
         chain_range = None
-        post_range = None
+    elif len(TEAMS) == 22:
+        post_range = 12
+        chain_range = None
     # see scratch_paper notes on relegation chain
     sub_season = f"{region} Regular Season"
 
 
 
     if region == 'Universal':
+        for tm in TEAMS:
+            tm.accolades['Universal-League'] += 1
+
         if chain_range:
             postseason, relegation_chain = round_robin(TEAMS, r=5, qualify_range=post_range, alt_qualify_range=chain_range)
         else:
-            postseason = round_robin(TEAMS, 2, qualify_range=post_range)
+            postseason = round_robin(TEAMS, 4, qualify_range=post_range)
             relegation_chain = None
     else:
-        postseason = round_robin(TEAMS, 1, qualify_range=post_range)
+        postseason = round_robin(TEAMS, 2, qualify_range=post_range)
         relegation_chain = None
 
     for team in TEAMS:
 
-        if stats_list:
-            for player in team.players:
-                temp = PlayerSeason(player, season_count, sub_season=sub_season)
-                stats_list[season_count].append(temp)
+        #if stats_list:
+        #    Testing what happens if I disable this function entirely
+        #    for player in team.players:
+        #        temp = PlayerSeason(player, season_count, sub_season=sub_season)
+        #        stats_list[season_count].append(temp)
                 #this loop will add the regular season stats of each player to their respective region's stat_list in main
                 #the issue I am having right now is that these objects contain far more games than just the regular season
                 #the regular season is only 126 games (6*21) but some of these objects contain over a thousand for certain iterations
@@ -863,16 +1040,39 @@ def league_season(TEAMS,use_saved=False,season_count=-1,final_reversed=True,regi
                 if team.seed == 20 or team.seed == 21 or team.seed == 22:
                     dumpster_fire.append(team)
 
-    if stats_list:
-        region_mvp(stats_list, season_count, region)
-    if post_range == 10:
+    #if stats_list:
+    #    region_mvp(stats_list, season_count, region)
+    if post_range in [10, 12]:
         one, two, three, four, five, six = postseason[0], postseason[1], postseason[2], postseason[3], postseason[4],postseason[5]
         for i in [6,7,8,9]:
             play_in.append(postseason[i])
             postseason[i].third_pick = 1
-        seven, p1 = best_of(play_in[0], play_in[1], 35, 8, True, 4,upset_list=upset_list,upset_count=upset_count,context=f"{region} Play-In")
-        p2, tenth = best_of(play_in[2], play_in[3], 35, 8, True, 4,upset_list=upset_list,upset_count=upset_count,context=f"{region} Play-In")
-        eight, ninth = best_of(p1, p2, 35, 8, True, 4,upset_list=upset_list,upset_count=upset_count,context=f"{region} Play-In")
+        if post_range == 12:
+            for i in [10, 11]:
+                play_in.append(postseason[i])
+                postseason[i].third_pick = 1
+
+            print(Fore.RED + f"{region} Play-In\n" + Fore.GREEN + "(Game 1) no.12 vs no.11, loser eliminated" + Fore.RESET)
+            h_11, twelfth = best_of(play_in[4], play_in[5], 45, 8, True, 4, upset_list=upset_list, upset_count=upset_count,context=f"S{season_count} {region} Play-In")
+            print(Fore.GREEN + "(Game 2) Game 1 Winner vs no.10, loser eliminated" + Fore.RESET)
+            h_10, eleventh = best_of(play_in[3], h_11, 45, 8, True, 4, upset_list=upset_list, upset_count=upset_count,context=f"S{season_count} {region} Play-In")
+
+            eleventh.history[season_count] += f" Lost in {region} play-in, finished 11th."
+            twelfth.history[season_count] += f" Lost in {region} play-in, finished 12th."
+
+        else:
+            h_10 = play_in[3]
+
+        pi_index = 2 if post_range == 12 else 0
+
+        print(Fore.GREEN + f"(Game {1+pi_index}) Game 2 Winner vs no.9, loser eliminated" + Fore.RESET)
+        h_9, tenth = best_of(play_in[2], h_10, 50, 8, True, 4, upset_list=upset_list, upset_count=upset_count,context=f"S{season_count} {region} Play-In")
+
+        print(Fore.GREEN + f"(Game {2+pi_index}) no.8 vs no.7, winner claims no.7, loser plays Game 3 Winner" + Fore.RESET)
+        seven, h_8 = best_of(play_in[0], play_in[1], 50, 8, True, 4,upset_list=upset_list,upset_count=upset_count,context=f"S{season_count} {region} Play-In")
+
+        print(Fore.GREEN + f"(Game {3+pi_index}) Game {1+pi_index} Winner vs Game {2+pi_index} Loser, winner claims no.8, loser eliminated" + Fore.RESET)
+        eight, ninth = best_of(h_8, h_9, 60, 8, True, 4,upset_list=upset_list,upset_count=upset_count,context=f"S{season_count} {region} Play-In")
 
         tenth.history[season_count] += f" Lost in {region} play-in, finished 10th."
         ninth.history[season_count] += f" Lost in {region} play-in, finished 9th."
@@ -880,22 +1080,25 @@ def league_season(TEAMS,use_saved=False,season_count=-1,final_reversed=True,regi
         playoff_one = [one, two, three, four, five, six, seven, eight]
 
         eighth, seventh, sixth, fifth, fourth, third, second, champ = double_elim_8(
-            playoff_one,upset_list=upset_list,upset_count=upset_count,region=region) if region == 'Universal' else double_elim_8(playoff_one,upset_list=upset_list,upset_count=upset_count,region=region)
+            playoff_one,upset_list=upset_list,upset_count=upset_count,region=region, season_count=season_count) if region == 'Universal' else double_elim_8(playoff_one, 60, 65, 70, 75, 90,upset_list=upset_list,upset_count=upset_count,region=region, season_count=season_count)
 
 
 
         for team in playoff_one:
             team.accolades['Regional-Playoffs'] += 1
-        champ.accolades['Regional-Champ'] += 1
         relegation_standings = None
+        champ.accolades['Regional-Champ'] += 1
         playoff_standings = [champ, second, third, fourth, fifth, sixth, seventh, eighth]
+
+
+
     elif post_range == 16 or post_range == 14 or chain_range:
-        relegation_standings = list(double_elim_16(relegation_chain, r1_thresh=80, r2_thresh=95, r3_thresh=115, r4_thresh=150, final_thresh=200, is_relegation=True,upset_list=upset_list,upset_count=upset_count,region=region))
+        relegation_standings = list(double_elim_16(relegation_chain, r1_thresh=170, r2_thresh=200, r3_thresh=225, r4_thresh=250, final_thresh=300, is_relegation=True,upset_list=upset_list,upset_count=upset_count,region=region, season_count=season_count))
     if chain_range:
         for i in [0,1]:
             relegation_standings[i].history[season_count] += f" {ordinal_string(i+15)} in Relegation Tournament -> UNI Playoffs."
             postseason.append(relegation_standings[i])
-            print(Fore.BLUE + f"{relegation_standings[i].name} is going to the playoffs." + Fore.RESET)
+            print(Fore.BLUE + f"{relegation_standings[i].name} are going to the playoffs." + Fore.RESET)
 
         for i in [2,3,4,5]:
             relegation_standings[i].history[
@@ -906,12 +1109,12 @@ def league_season(TEAMS,use_saved=False,season_count=-1,final_reversed=True,regi
         for i in range(6,len(relegation_standings)):
             relegation_standings[i].history[
                 season_count] += f" {ordinal_string(i+15)} in Relegation Tournament -> S_{season_count+1} Universal Qualifying."
-            print(Fore.BLUE + f"{relegation_standings[i].name} is on the chopping block." + Fore.RESET)
+            print(Fore.BLUE + f"{relegation_standings[i].name} are on the chopping block." + Fore.RESET)
             missed_playoffs.insert(i-2, relegation_standings[i])
 
 
         playoff_one = list(postseason)
-        champ, second, third, fourth, fifth, sixth, seventh, eighth, ninth, tenth, eleventh, twelfth, thirteenth, fourteenth, fifteenth, sixteenth = double_elim_16(postseason, 180, 210, 300, 400, 500,upset_list=upset_list,upset_count=upset_count,region=region)
+        champ, second, third, fourth, fifth, sixth, seventh, eighth, ninth, tenth, eleventh, twelfth, thirteenth, fourteenth, fifteenth, sixteenth = single_elim_16(postseason,upset_list=upset_list,upset_count=upset_count,region=region, season_count=season_count)
         playoff_standings = [champ, second, third, fourth, fifth, sixth, seventh, eighth, ninth, tenth, eleventh, twelfth, thirteenth, fourteenth, fifteenth, sixteenth]
         for team in playoff_one:
             team.accolades['Universal-Playoffs'] += 1
@@ -920,7 +1123,7 @@ def league_season(TEAMS,use_saved=False,season_count=-1,final_reversed=True,regi
 
 
 
-    playoff_standings_alt = [second, third, fourth, fifth, sixth, seventh, eighth] if post_range == 10 else [second, third, fourth, fifth, sixth, seventh, eighth, ninth, tenth, eleventh, twelfth, thirteenth, fourteenth, fifteenth, sixteenth]
+    playoff_standings_alt = [second, third, fourth, fifth, sixth, seventh, eighth] if post_range in [10,12] else [second, third, fourth, fifth, sixth, seventh, eighth, ninth, tenth, eleventh, twelfth, thirteenth, fourteenth, fifteenth, sixteenth]
     place = 1
     for team in playoff_standings_alt:
         place+=1
@@ -930,21 +1133,31 @@ def league_season(TEAMS,use_saved=False,season_count=-1,final_reversed=True,regi
             season_count] += f" {region} playoffs as {champ.seed} seed, WON CHAMPIONSHIP. -> UNI Qualifier."
         for team in [second, third, fourth, fifth]:
             team.history[season_count] += f" -> PQ Swiss."
-        for team in [sixth, seventh, eighth, ninth]:
+        for team in [sixth, seventh, eighth]:
             team.history[season_count] += f" -> Last Stand Tournament."
     else:
         champ.history[season_count] += f" Universal playoffs as {champ.seed} seed, WON CHAMPIONSHIP."
 
     print(Fore.RED + f"{champ.name} have won the {region} League." + Fore.RESET)
 
-    sleep(8 if region == "Universal" and season_count != 0 else 1.5)
+    sleep(6 if region == "Universal" and season_count != 0 else 0.6)
 
-    if ninth and tenth:
+    if len(play_in) == 4:
         play_in_standings = [ninth, tenth]
+        final_standings = playoff_standings + play_in_standings + missed_playoffs
+    elif len(play_in) == 6:
+        play_in_standings = [ninth, tenth, eleventh, twelfth]
         final_standings = playoff_standings + play_in_standings + missed_playoffs
     else:
         final_standings = playoff_standings + missed_playoffs
+
+    translated_region = region.replace(" Regional", "") if " Regional" in region else region
     for team in final_standings:
+        if team.played_region[season_count] in ['Darkwing', 'Shining-Core', 'Diamond-Sea', 'Web-of-Nations', 'Ice-Wall',
+                                    'Candyland', "Hell's-Circle", 'Steel-Heart'] and region == 'Universal':
+            team.played_region[season_count] += 'Universal'
+        else:
+            team.played_region[season_count] = translated_region
         if team.mine:
             print(Fore.BLUE + f"{team.name}: {team.history[season_count]}"
                   + Fore.RESET)
@@ -957,8 +1170,14 @@ def league_season(TEAMS,use_saved=False,season_count=-1,final_reversed=True,regi
     else:
         write_champ(champ, season_count, region)
 
+
+    abbreviated_region = {'Darkwing' : 'DW', 'Shining-Core' : 'SC', 'Diamond-Sea' : 'DS', 'Web-of-Nations' : 'WON', 'Ice-Wall' : 'IW',
+                                    'Candyland' : 'CL', "Hell's-Circle" : "HC", 'Steel-Heart' : 'SH'}
     for pos in range(len(final_standings)):
         final_standings[pos].seed = pos
+    if translated_region != 'Universal':
+        for pos in range(len(final_standings)):
+            final_standings[pos].region_seed = f"{abbreviated_region[translated_region]}-{pos+1}"
 
     if final_reversed:
         final_standings.reverse()
