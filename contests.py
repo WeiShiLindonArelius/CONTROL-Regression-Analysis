@@ -6,6 +6,10 @@ from load_pickle import season_wipe
 # todo edit print_standings to print normal record AND lineup record
 # which can be accessed from team.lineup_wins and team.lineup_losses
 def print_standings(TEAMS,universal=False):
+    #todo make it print team NAMES ONLY in different colors based on position
+    #for regional, 1-6 should be Cyan, 7-10 should be Yellow, and everyone else is red
+    #for universal, 1-14 should be Cyan, 15-30 should be Yellow, and everyone else is red
+
     enablePrint()
     print(Fore.GREEN + f"ROBIN STANDINGS" + Fore.RESET)
 
@@ -40,7 +44,7 @@ def round_robin(TEAMS,r,qualify_range,amp=4,alt_qualify_range = None, is_test=Fa
             for j in range(i + 1, SIZE):
                 team1 = TEAMS[i]
                 team2 = TEAMS[j]
-                game(team1, team2,amp)
+                game(team1, team2,amp,playoffs=None)
         if k == r-1:
             for team in TEAMS:
                 team.points = (3*team.match_wins) + team.match_draws
