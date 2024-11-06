@@ -1,7 +1,8 @@
 from random import choice, seed, uniform
-from Player_Creator import s_tier, a_tier, b_tier, c_tier
+from Player_Creator import s_tier, a_tier, b_tier, c_tier, slasher, undead
 from colorama import Fore, Back, Style
 from numpy import mean
+from stat_functions import QUERY
 
 import itertools
 
@@ -9,14 +10,17 @@ def grade_players(players, is_team=None):
     #should take in a list of players, not a dict draft class
 
     pos_xWAR_coefficient = {'1 Attack Speed' : -61.46, '1 Attack Damage' : 16.67, '1 Health' : 0.34,
-                            '1 Power' : 283.01, '1 Spawn Time' : -149.98, '.001 Critical Chance' : 26.40,
+                            '1 Power' : 250, '1 Spawn Time' : -149.98, '.001 Critical Chance' : 26.40,
                             '.1 Critical Multiplier' : 0.79}
     #positive coefficient is multiplied by (player_stat - average_stat) if player_stat > average_stat
+    #pos coefficient = stat goes UP by X, xWAR goes UP by Y (so negative numbers mean xWAR goes DOWN)
 
     neg_xWAR_coefficient = {'1 Attack Speed' : 73.92, '1 Attack Damage' : -15.83, '1 Health' : -1.44,
-                            '1 Power' : -320.01, '1 Spawn Time' : 104.78, '.001 Critical Chance' : -29.83,
+                            '1 Power' : -250, '1 Spawn Time' : 104.78, '.001 Critical Chance' : -29.83,
                             '.1 Critical Multiplier' : -16.26}
     #negative coefficient is multiplied by (player_stat - average_stat) if player_stat < average_stat
+    #neg coefficient = stat goes DOWN by X, xWAR goes UP by Y (so negative numbers mean xWAR goes DOWN)
+    #coefficients for power have been adjusted to +/- 250
 
     size = len(players)
 
@@ -110,17 +114,17 @@ def write_to_file(filename=None, words=None, mode='w', error=False):
 def generate_lineups_six_to_four(six_lineup):
     #this will take in a single lineup of SIX players and return 9 lineups
     #there are the 8 best lineups, and the 9th is the best lineup again
-    four_lineups = [0,1,2,3,4,5,6,7,8]
+    four_lineups = []
     six_lineup.sort(key=lambda player : player.xWAR, reverse=True)
-    four_lineups[0] = [six_lineup[0], six_lineup[1], six_lineup[2], six_lineup[3]]
-    four_lineups[1] = [six_lineup[0], six_lineup[1], six_lineup[2], six_lineup[4]]
-    four_lineups[2] = [six_lineup[0], six_lineup[1], six_lineup[2], six_lineup[5]]
-    four_lineups[3] = [six_lineup[0], six_lineup[1], six_lineup[3], six_lineup[4]]
-    four_lineups[4] = [six_lineup[0], six_lineup[1], six_lineup[3], six_lineup[5]]
-    four_lineups[5] = [six_lineup[0], six_lineup[1], six_lineup[4], six_lineup[5]]
-    four_lineups[6] = [six_lineup[0], six_lineup[2], six_lineup[3], six_lineup[4]]
-    four_lineups[7] = [six_lineup[0], six_lineup[2], six_lineup[3], six_lineup[5]]
-    four_lineups[8] = [six_lineup[0], six_lineup[1], six_lineup[2], six_lineup[3]]
+    four_lineups.append([six_lineup[0], six_lineup[1], six_lineup[2], six_lineup[3]])
+    four_lineups.append([six_lineup[0], six_lineup[1], six_lineup[2], six_lineup[4]])
+    four_lineups.append([six_lineup[0], six_lineup[1], six_lineup[2], six_lineup[5]])
+    four_lineups.append([six_lineup[0], six_lineup[1], six_lineup[3], six_lineup[4]])
+    four_lineups.append([six_lineup[0], six_lineup[1], six_lineup[3], six_lineup[5]])
+    four_lineups.append([six_lineup[0], six_lineup[1], six_lineup[4], six_lineup[5]])
+    four_lineups.append([six_lineup[0], six_lineup[2], six_lineup[3], six_lineup[4]])
+    four_lineups.append([six_lineup[0], six_lineup[2], six_lineup[3], six_lineup[5]])
+    four_lineups.append([six_lineup[0], six_lineup[1], six_lineup[2], six_lineup[3]])
 
     #0: all lineups (9), 1: all but 6 and 7 (7),
     #2: [0,1,2,6,7,8] (6), 3: [0,3,4,6,7] (6)
@@ -134,22 +138,22 @@ class Team:
              "Sphinxes", "Cyclops", "Titans", "Fates", "Valkyries", "Demigods", "Godkillers", "Inferno", "Hive", "Elementals", "Golems",
              "Ifrits", "Djinni", "Imps", "Sprites", "Goblins", "Trolls", "Orcs", "Zombies", "Ghosts", "Werewolves",
              "Vampires", "Liches", "Slayers", "Faeries", "Elves", "Dwarves", "Gnomes",
-             "Halflings", "Ogres", "Giants", "Hydras", "Krakens", "Leviathan", "Serpents", "Basilisks",
-             "Manticores", "Wyrms", "Wyverns", "Behemoths", "Manticore", "Harpy", "Merfolk", "Naiads",
-             "Dryads", "Sirens", "Eladrin", "Draconians", "Demons", "Angelkin", "Succubi", "Incubi",
-             "Oni", "Kitsune", "Rakshasa", "Feykin", "Impalers", "Necromancers", "Warlocks",
-             "Enchanters", "Shamans", "Sorcerers", "Illusionists", "Geomancers", "Chronomancers",
-              "Diviners",  "Magi", "Alchemists", "Witchdoctors", "Arcanists", "Summoners",
+             "Halflings", "Ogres", "Hydra", "Kraken", "Leviathan", "Serpents", "Basilisks", "Wendigo",
+            "Wyverns", "Behemoths", "Manticore", "Naiads", "Frostlords", "Ghost-Runners", "Ents", "Terraformers",
+             "Dryads", "Sirens", "Eladrin", "Draconians", "Demons", "Angelkin", "Succubi", "Incubi", "Nebulae",
+             "Oni", "Kitsune", "Rakshasa", "Feykin", "Impalers", "Necromancers", "Warlocks", "Lunatics",
+             "Enchanters", "Shamans", "Sorcerers", "Illusionists", "Geomancers", "Chronomancers", "Aether",
+              "Diviners",  "Magi", "Alchemists", "Witchdoctors", "Arcanists", "Summoners", "Zealots", "Thunderbirds",
              "Purifiers", "Exorcists", "Warden", "Guardians", "Protectors", "Crusaders", "Paladins", "Armament", "Gravity", "Assassins",
              "Templars", "Inquisitors", "Acolytes", "Clerics", "Priests", "Druids", "Shapeshifters", "Skinwalkers",
              "Warg", "Beastmasters",  "Dervish", "Puppeteer", "Psychic", "Oracle", "Mystic", "Tar-Creepers", "Amalgam", 'Wings', 'Termites', 'Revolution',
              'Arch-Kings', 'Samurai', 'Darkness', 'Voidwalkers', 'Ghasts', 'Watchers', 'Bloodspawn', 'Night-Terrors', 'Underlords', 'Devils',
-             'Serpents', 'Swashbucklers', 'Sunspots']
+             'Swashbucklers', 'Sunspots', "Aces", "Fever", "Mavericks", "Rangers"]
 
     names = list(set(names))
     names_copy = names.copy()
 
-    def __init__(self,region,mine=False,pre_name=None):
+    def __init__(self,region,mine=False,pre_name=None,season_count=-1):
         seed()
         if pre_name:
             b = pre_name
@@ -162,31 +166,83 @@ class Team:
             b = choice(Team.names_copy)
         n = f"{region}_{b}"
         self.mine = mine
-        if self.mine:
+        if self.mine and '*' not in n:
             self.name = f"**{n}**"
         else:
             self.name = n
         self.region = region
+        self.season_origin = season_count
         self.full_name = self.name
+
+        team_sql = """ 
+                INSERT INTO Team(team_name, region_of_origin, season_of_origin)
+                VALUES (?, ?, ?)
+        """
+        team_params = (self.name, self.region, self.season_origin)
+        self.team_id = QUERY(team_sql, params=team_params, is_select=False)
+        #QUERY is set to return the primary key assigned to a created value
 
         #ALL DONE: here, make it so that each team is given six players, and 15 lineups of 4 arranged from these players
         # will be saved in self.lineups which is a list of player lists
         # each team will also get a lineup_wins list and a lineup_losses list
         # and the number of wins/losses that lineup has
         # this will initiate the full lineup of six (team.players object) and generate...() will be run AFTER
-        #todo play with team creation wth 6-man rosters to ensure a decent amount of variability
-        if region == 'House-of-Achlys':
-            self.players = [s_tier(), c_tier(2.5), c_tier(2), c_tier(1.75), a_tier(1), b_tier(1.2)]
-        elif region == 'Universal':
-            self.players = [s_tier(), a_tier(), b_tier(round(uniform(1,2),2)), c_tier(0.5), c_tier(1), b_tier(round(uniform(1,2),2))]
+
+        if region == 'Universal':
+            uni_coin = choice([1,2,3,4])
+
+            if uni_coin == 1:
+                coin_player = s_tier(round(uniform(0,2),2), season_count=season_count, trait_amp=.99)
+            elif uni_coin == 2:
+                coin_player = a_tier(round(uniform(0,2.5), 2), season_count=season_count, trait_amp=0.98)
+            elif uni_coin == 3:
+                coin_player = b_tier(round(uniform(0, 3), 2), season_count=season_count, trait_amp=0.95)
+            else:
+                coin_player = c_tier(round(uniform(0, 4.5), 2), season_count=season_count, trait_amp=0.9)
+
+
+            self.players = [s_tier(round(uniform(0,4),2), season_count=season_count), a_tier(round(uniform(1,4),2), season_count=season_count), b_tier(round(uniform(1,4),2), season_count=season_count), c_tier(round(uniform(2,5),2), season_count=season_count), c_tier(round(uniform(0,6),2), season_count=season_count), coin_player]
+
         elif region == 'Labyrinth':
-            self.players = [s_tier(), a_tier(round(uniform(1,2),2)), b_tier(round(uniform(1,2),2)), b_tier(1), b_tier(0.5), c_tier()]
+            self.players = [s_tier(season_count=season_count, trait_amp=0.8),
+                            a_tier(round(uniform(1,2),2), season_count=season_count, trait_amp=0.75),
+                            b_tier(round(uniform(1,2),2), season_count=season_count, trait_amp=0.7),
+                            b_tier(1, season_count=season_count, trait_amp=0.65),
+                            b_tier(0.5, season_count=season_count, trait_amp=0.6),
+                            c_tier(season_count=season_count, trait_amp=0.5, pre_reflect=1)]
         elif region == 'Test':
-            self.players = [s_tier(round(uniform(1,3),2)), a_tier(round(uniform(1,4),2)),
-                            b_tier(round(uniform(0.5,5),2)), b_tier(round(uniform(0.5,5),2)),
-                            c_tier(round(uniform(0,6),2)), c_tier(round(uniform(0,7),2))]
+            self.players = [s_tier(round(uniform(1,3),2), season_count=season_count), a_tier(round(uniform(1,4),2), season_count=season_count),
+                            b_tier(round(uniform(0.5,5),2), season_count=season_count), b_tier(round(uniform(0.5,5),2), season_count=season_count),
+                            c_tier(round(uniform(0,6),2), season_count=season_count), c_tier(round(uniform(0,7),2), season_count=season_count)]
+        elif region == 'Cosmic':
+            self.players = [slasher(round(uniform(0,2.5),2), season_count=season_count), slasher(round(uniform(0,2.25),2), season_count=season_count),
+                            slasher(round(uniform(0,2),2), season_count=season_count), slasher(round(uniform(0,1.75),2), season_count=season_count),
+                            slasher(round(uniform(0,1.5),2), season_count=season_count), slasher(round(uniform(0,1.25),2), season_count=season_count)]
+        elif region == 'Tartarus':
+            self.players = [undead(round(uniform(0, 3), 2), season_count=season_count),
+                            undead(round(uniform(0, 3), 2), season_count=season_count),
+                            undead(round(uniform(0, 2.5), 2), season_count=season_count),
+                            undead(round(uniform(0, 2.5), 2), season_count=season_count),
+                            undead(round(uniform(0, 1.25), 2), season_count=season_count),
+                            undead(round(uniform(0, 1.25), 2), season_count=season_count)]
+        elif region == 'Beyond':
+            self.players = [s_tier(round(uniform(0, 4), 2), season_count=season_count, pre_reflect=1),
+                            a_tier(round(uniform(1, 4), 2), season_count=season_count, pre_reflect=1),
+                            b_tier(round(uniform(0.5, 4.5), 2), season_count=season_count, pre_reflect=1),
+                            b_tier(round(uniform(1.5, 3.5), 2), season_count=season_count, pre_reflect=1),
+                            c_tier(round(uniform(3, 4), 2), season_count=season_count, pre_reflect=1),
+                            c_tier(round(uniform(2, 6.5), 2), season_count=season_count, pre_reflect=1)]
+
+
         else:
-            self.players = [s_tier(), a_tier(1), a_tier(), b_tier(1), c_tier(), c_tier(round(uniform(1,2),2))]
+            self.players = [s_tier(round(uniform(0,1)), season_count=season_count),
+                            a_tier(round(uniform(0,(1.5 if choice([True, False]) else 0.5)),2), season_count=season_count, trait_amp=0.95),
+                            b_tier(round(uniform(1,(2.5 if choice([True, False, False]) else 4)),2), season_count=season_count),
+                            (b_tier(round(uniform(0, 2.5)), season_count=season_count) if choice([True, True, False]) else a_tier(round(uniform(0, 2.5)),season_count=season_count,fixed=choice(['C%','I*','Pp']))),
+                            (c_tier(round(uniform(0, 2.5)), season_count=season_count) if choice([True, True, False]) else slasher(round(uniform(0, 2.5)),season_count=season_count)),
+                            (c_tier(round(uniform(0, 2.5)), season_count=season_count) if choice([True, True, False]) else undead(round(uniform(0, 1)),season_count=season_count))]
+
+
         grade_players(self.players)
         self.players.sort(key= lambda p : p.grade_dict["Rank"])
         all_lineups = list(generate_lineups_six_to_four(self.players))
@@ -211,11 +267,18 @@ class Team:
 
         self.trophies = 0
         self.seed = -1
-        self.history = {0 : "", 1 : "", 2 : "", 3 : "", 4 : "", 5 : "", 6 : "", 7 : "", 8 : "", 9 : "", 10 : ""}
+        self.region_seed = "None"
+        self.history = {key: "" for key in range(50)}
         #self.seed_dict = {'RegionRegular' : -1, 'RegionPlayoffs' : -1, 'UniPlayIn' : -1, 'UniGroup' : -1, 'UniRegular' : -1}
         self.group = "None"
+        self.played_region = {key: "" for key in range(50)} # dictionary of the leagues a team played in. keys
+                                                            # are season_count, vals a string assigned in  league_season
+
         self.margin = 0
-        self.accolades = {'Regional-Playoffs' : 0, 'Regional-Champ' : 0, 'Last-Stand' : 0, 'Pre-Qualifying' : 0, 'Universal-Qualifying' : 0, 'Universal-Playoffs' : 0, 'Uni-Playoff-Wins' : 0, 'Universal-Champ' : 0}
+        self.accolades = {'Regional-Playoffs' : 0, 'Regional-Champ' : 0, 'Last-Stand' : 0, 'Pre-Qualifying' : 0,
+                          'Universal-Qualifying' : 0, 'Universal-League' : 0, 'Universal-Playoffs' : 0, 'Uni-Playoff-Wins' : 0, 'Universal-Champ' : 0
+                          , 'Slashers' : 0, 'Undead' : 0, 'Reflectors' : 0
+                          , 'Clutch Players' : 0, 'Inconsistent Players' : 0, 'Playoff Performers' : 0}
         #self.generate_player_names()
 
         #0 means no second round pick, 1 means group 1 (missed regional playoffs) and 2 means group 2 (came from region
@@ -225,9 +288,9 @@ class Team:
 
         self.qualifying_group = 0
 
-    def make_mine(self):
+    def make_mine(self,name):
         self.mine = True
-        self.name = f"**{self.name}**"
+        self.name = f"**{name}**" if "**" not in name else name
 
     def print_team_name(self, season_count):
         if self.mine:
@@ -247,6 +310,7 @@ class Team:
             print(str(player))
 
     def print_history(self, season_count):
+
         if self.mine:
             with open('my_teams', 'a') as h:
                 if season_count != 1:
@@ -254,21 +318,49 @@ class Team:
                         h.write(f"Season {s}: {self.history[s]}\n")
                 else:
                     h.write(f"Season 1: {self.history[1]}\n")
-                h.write('--------------\n')
+                h.write('--------------\n\n')
         with open('history', 'a') as h:
             if season_count != 1:
                 for s in range(1, season_count + 1):
                     h.write(f"Season {s}: {self.history[s]}\n")
             else:
                 h.write(f"Season 1: {self.history[1]}\n")
-            h.write('--------------\n')
+            h.write('--------------\n\n')
 
     def print_accolades(self):
+        undead_count = 0
+        slasher_count = 0
+        reflector_count = 0
+        clutch_count = 0
+        inc_count = 0
+        pp_count = 0
+        for player in self.players:
+            if player.trait_tag == 'U-':
+                undead_count += 1
+            elif player.trait_tag == '$l':
+                slasher_count += 1
+            elif player.trait_tag == 'R#':
+                reflector_count += 1
+            elif player.trait_tag == 'C%':
+                clutch_count += 1
+            elif player.trait_tag == 'I*':
+                inc_count += 1
+            elif player.trait_tag == 'Pp':
+                pp_count += 1
+        self.accolades['Slashers'] = slasher_count
+        self.accolades['Undead'] = undead_count
+        self.accolades['Reflectors'] = reflector_count
+        self.accolades['Clutch Players'] = clutch_count
+        self.accolades['Inconsistent Players'] = inc_count
+        self.accolades['Playoff Performers'] = pp_count
+
         if self.mine:
             with open('my_teams', 'a') as h:
                 i = 0
                 for key in self.accolades.keys():
-                    h.write(f"{key}: {self.accolades[key]}, ")
+                    h.write(f"{key}: {self.accolades[key]}")
+                    if i <= len(self.accolades.keys())-1:
+                        h.write(", ")
                     i += 1
                     if i % 4 == 0:
                         h.write('\n')
@@ -277,7 +369,9 @@ class Team:
         with open('history', 'a') as h:
             i=0
             for key in self.accolades.keys():
-                h.write(f"{key}: {self.accolades[key]}, ")
+                h.write(f"{key}: {self.accolades[key]}")
+                if i <= len(self.accolades.keys()) - 1:
+                    h.write(", ")
                 i+=1
                 if i%4 == 0:
                     h.write('\n')
