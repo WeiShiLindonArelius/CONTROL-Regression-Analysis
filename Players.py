@@ -5,6 +5,26 @@ from colorama import Fore, Style
 import math
 import numpy as np
 from collections import OrderedDict
+import sqlite3
+
+NO_SQL = True
+
+def QUERY(sql, connect=sqlite3.connect('ControlDataBase.db'), params=None, is_select=True):
+    if NO_SQL:
+        return 0
+    elif is_select:
+        if params:
+            return pd.read_sql_query(sql, connect, params=params)
+        else:
+            return pd.read_sql_query(sql, connect)
+    else:
+        cur = connect.cursor()
+        if params:
+            cur.execute(sql, params)
+        else:
+            cur.execute(sql)
+        connect.commit()
+        return cur.lastrowid
 
 def write_to_file(filename=None, words=None, mode='w', error=False):
     if error:
@@ -29,6 +49,8 @@ def calculate_standard_deviation(number, sample_size, sample_average):
     return standard_deviation
 
 
+multiplier = 1
+
 def grade_seasons(seasons, print_averages=False, import_averages = None, context = None, avg_stats_df = None, region=None):
 
     DATA_FRAME = False
@@ -47,12 +69,6 @@ def grade_seasons(seasons, print_averages=False, import_averages = None, context
 
     #the import_averages function is for when seasons are being graded for a team, so their season grades can be compared to those of the league they were in
     #instead of just the team
-
-    STANDARD_LENGTH = 50
-
-    trash = choice(seasons)
-    game_length = trash.game_length
-    multiplier = 1 if MULT_NO_USE else STANDARD_LENGTH / game_length
 
     if import_averages:
         size = len(import_averages)
@@ -88,6 +104,8 @@ def grade_seasons(seasons, print_averages=False, import_averages = None, context
 
                 with pd.ExcelWriter(path, engine='openpyxl') as writer:
                     final_df.to_excel(writer, sheet_name='PlayerSeasonStats', index=False)
+
+        #Remnant of a discarded function
 
         for season in import_averages:
 
@@ -263,13 +281,17 @@ class PlayerSeason:
         self.league_averages = {'Kills' : 0, 'Deaths' : 0, 'Damage' : 0, 'Effect' : 0, 'Overkill' : 0, 'Mitigated' : 0}
         self.season_grade_data = 0
         self.grade_breakdown = ""
-        self.game_length = player.game_length
         if self.game_count != 0:
             self.kills = player.kills / self.game_count
             self.deaths = player.deaths / self.game_count
             self.damage = player.damage_data['Total-Damage'] / self.game_count
             self.effect = player.damage_data['Tesseract'] / self.game_count
             self.overkill = player.damage_data['Overkill'] / self.game_count
+            self.healed = 0 if player.trait_tag != 'U-' else player.damage_data['Healed'] / self.game_count
+            self.revived = 0 if player.trait_tag != 'U-' else player.damage_data['Revived'] / self.game_count
+            self.reflected = 0 if player.trait_tag != 'R#' else player.damage_data['Reflected']/self.game_count
+            self.reflect_kills = 0 if player.trait_tag != 'R#' else player.damage_data['Reflect-Kills'] / self.game_count
+
             self.streak = player.kill_streak['Peak']
             self.mitigated = player.crit_data['Mitigated'] / self.game_count
             self.crit_pct = player.crit_data['Ratio']
@@ -297,7 +319,12 @@ class PlayerSeason:
     def print_mitigated(self):
         with open('best_stats', 'a') as p:
             p.write(f"{self.player.name} (for S{self.season}_{self.player.team})\n"
-                    f"Damage Mitigated Per Game: {self.mitigated :.3f} (Avg {self.league_averages['Mitigated']})\n\n")
+                    f"Damage Mitigated Per Game via Parry: {self.mitigated :.3f} (Avg {self.league_averages['Mitigated']})\n\n")
+
+    def print_healed(self):
+        with open('best_stats', 'a') as p:
+            p.write(f"{self.player.name} (for S{self.season}_{self.player.team})\n"
+                    f"Damage Mitigated Per Game via Healing: {self.healed :.3f}\n\n")
 
     def print_damage(self):
         with open('best_stats', 'a') as p:
@@ -305,7 +332,8 @@ class PlayerSeason:
                     f"Damage Dealt Per Game: {self.damage :.3f} (Avg {self.league_averages['Damage']})\n\n")
 
     def print_player_season(self, filename=None):
-
+        undead_str = f"Health Healed Per Game: {self.healed:.3f}\nRevives Per Game: {self.revived:.3f}\n" if self.player.trait_tag == 'U-' else ""
+        reflector_str = f"Damage Reflected Per Game: {self.reflected:.3f}\nKills via Reflect Per Game: {self.reflect_kills:.3f}\n" if self.player.trait_tag == 'R#' else ""
 
         if not filename:
             print(f"{self.player.name} (for S{self.season}_{self.player.team}),", end='')
@@ -325,7 +353,7 @@ class PlayerSeason:
             f"Damage Dealt Per Game: {self.damage :.3f}\n"
             f"Damage Mitigated Per Game: {self.mitigated :.3f}\n"
             f"Total Effect Per Game: {self.effect :.3f}\n"
-            f"Overkill Effect Per Game: {self.overkill :.3f}\n"
+            f"Overkill Effect Per Game: {self.overkill :.3f}\n{undead_str}{reflector_str}"
             f"Best Kill Streak: {self.streak}\n\n")
         else:
             with open(filename, 'a') as p:
@@ -342,15 +370,45 @@ class PlayerSeason:
                 f"Damage Dealt Per Game: {self.damage :.3f} (Avg {self.league_averages['Damage']})\n"
                 f"Damage Mitigated Per Game: {self.mitigated :.3f} (Avg {self.league_averages['Mitigated']})\n"
                 f"Total Effect Per Game: {self.effect :.3f} (Avg {self.league_averages['Effect']})\n"
-                f"Overkill Effect Per Game: {self.overkill :.3f} (Avg {self.league_averages['Overkill']})\n"
+                f"Overkill Effect Per Game: {self.overkill :.3f} (Avg {self.league_averages['Overkill']})\n{undead_str}{reflector_str}"
                 f"Best Kill Streak: {self.streak}\n\n")
 
 class Player:
-    def __init__(self, tier, atk_dmg, atk_spd, crit_pct, crit_x, health, power, spawn_time, crit_dmg, name, team="None"):
+    def __init__(self, tier, atk_dmg, atk_spd, crit_pct, crit_x, health, power, spawn_time, crit_dmg, name,
+                 team="None", insta_kill_pct = 0, trait_tag = "None", amp=0, season_count=0, undead_chance=0,
+                 trait_multiplier=0):
+
+        trait_trans = {'$l' : 'Slasher', 'U-' : 'Undead', 'R#' : 'Reflector'}
+        try:
+            tag_param = trait_trans[trait_tag]
+        except KeyError:
+            tag_param = trait_tag
+        player_params = (amp, tier, tag_param, name, season_count)
+        player_sql = """
+        INSERT INTO Player(amp, tier, trait, player_name, season_of_origin)
+        VALUES(?, ?, ?, ?, ?)
+        """
+
+        #This is a universal number for calculating the impact of traits created AFTER Reflector.
+        #Clutch, Inconsistent, and Playoff Performer use this multiplier in a formula contained in
+        #a Google Doc called "CONTROL Traits"
+        self.trait_multiplier = trait_multiplier
+
+        #C% is assigned during the lineup. If the tick is above 90, it turns to true for the rest of the game
+        #I* is assigned at the beginning of each lineup with a roll, the number is the multiplier on power
+        #Pp is assigned at the beginning of a game and lasts throughout, the number is added to power
+        #ALL TRAITS are removed where they are created. C% should be set to False at the end of a lineup,
+        #I* should be set to False at the end of a lineup, and Pp should be set to False at the end of a game
+        self.trait_bools = {'C%' : False, 'I*' : 0, 'Pp' : 0}
+
+        self.player_id = QUERY(player_sql, params=player_params, is_select=False)
+
         #baseline stats
         self.tier = tier
         self.atk_dmg = atk_dmg
         self.atk_spd = atk_spd
+        self.insta_kill_pct = insta_kill_pct
+        self.undead_chance = undead_chance
         self.crit_pct = crit_pct
         self.crit_x = crit_x
         self.overkill_x = 3
@@ -358,8 +416,9 @@ class Player:
         self.health = health
         self.power = power
         self.spawn_time = spawn_time
+        self.amp = amp
+
         self.drafted = "Not Drafted (Intro)"
-        self.game_length = -1
 
         #in-game and in-season stats
         self.delayed_atk = 0
@@ -369,7 +428,12 @@ class Player:
         self.crit_kills = 0
         self.deaths = 0
         self.age = 0
-        self.name = name
+        if trait_tag in ['C%', 'I*', 'R#']:
+            self.name = f"{trait_tag}{name}"
+        elif trait_tag == 'Pp':
+            self.name = f"Pp!{name}"
+        else:
+            self.name = name
         self.crit_dmg = crit_dmg
         self.crit_data = {'Hit' : 0, 'Miss' : 0, 'Ratio' : 0.0, 'Parry' : 0, 'P_Miss' : 0, "P_Ratio" : 0.0, "Mitigated" : 0.0}
         self.grade_data = 0
@@ -379,14 +443,17 @@ class Player:
         self.dps = self.atk_dmg / self.atk_spd
         self.no_power = 0
         self.kill_streak = {'Current' : 0, 'Peak' : 0}
-        self.damage_data = {'Tesseract' : 0.0, 'Total-Attacks' : 0, 'Total-Damage' : 0.0, 'Total-Delayed-Damage' : 0.0, 'Total-Delayed-X' : 0.0, 'Delayed-Count' : 0, 'Avg-Delayed-X' : 0.0, 'Avg-Delayed-Damage' : 0.0, 'Overkill' : 0.0, 'Overkill-Count' : 0}
+        self.damage_data = {'Tesseract' : 0.0, 'Total-Attacks' : 0, 'Total-Damage' : 0.0, 'Total-Delayed-Damage' : 0.0, 'Reflected' : 0.0,
+                            'Total-Delayed-X' : 0.0, 'Delayed-Count' : 0, 'Avg-Delayed-X' : 0.0,
+                            'Avg-Delayed-Damage' : 0.0, 'Overkill' : 0.0, 'Overkill-Count' : 0,
+                            'Revived' : 0, 'Healed' : 0, 'Reflect-Kills' : 0}
         self.games_played = {'All' : 0, 'This-Season' : 0, 'Playoffs' : 0, 'Matches' : 0}
         self.game_stats = []
 
         self.xWAR = 0
         self.breakout = False
 
-        self.trait_tag = None #Can equal Nuclear, Healer, Clutch, Butler, or Reflector
+        self.trait_tag = trait_tag #Can equal $l, U-, or R# as of 05/05
 
     def __str__(self):
         if self.deaths != 0:
@@ -429,16 +496,50 @@ class Player:
             f"AGE: {self.age}\n"
         return holder
 
-    def attack(self, defender):
+    def reflect_damage(self, receiver):
+        #note that receiver, as in receiving the damage, is the attacker in an attack(), and self is the defender
+        dmg = receiver.atk_dmg if uniform(0,1)>=self.crit_pct else (receiver.atk_dmg*self.crit_x)
+        receiver.health -= dmg
+        self.damage_data['Total-Damage'] += dmg
+        self.damage_data['Reflected'] += dmg
+        if receiver.health <= 0:
+            # game checks for defender life status after the attack function is over
+            undead_roll = uniform(0, 1)
+            if receiver.trait_tag == 'U-' and undead_roll <= 0.3:
+                receiver.damage_data['Healed'] += (receiver.max_health / 2) - receiver.health
+                receiver.damage_data['Revived'] += 1
+                receiver.health = (receiver.max_health / 2)
+
+            else:
+                receiver.die()
+                self.damage_data['Overkill'] += abs(3 * receiver.health)
+                self.damage_data['Overkill-Count'] += 1
+                receiver.deaths += 1
+                self.damage_data['Reflect-Kills'] += 1
+                self.kills += 1
+                self.kill_streak['Current'] += 1
+                self.delayed_atk = 0
+
+
+    def attack(self, defender, clutch=False):
         self.damage_data['Total-Attacks'] += 1
         damage = self.atk_dmg * (1 + self.delayed_atk)
+        if clutch:
+            damage *= self.trait_multiplier
         if self.delayed_atk > 0:
             self.damage_data['Total-Delayed-Damage'] += damage
             self.damage_data['Total-Delayed-X'] += self.delayed_atk
             self.damage_data['Delayed-Count'] += 1
         crit = False
         crit_roll = uniform(0, 1)
-        if crit_roll <= self.crit_pct:
+
+        if crit_roll <= self.insta_kill_pct:
+            #insta_kill is the slasher variable for crit_pct, and every time they crit, they deal the max health of the defender
+            damage = defender.max_health
+            crit=True
+            if self.crit_data:
+                self.crit_data['Hit'] += 1
+        elif crit_roll <= self.crit_pct and self.insta_kill_pct == 0:
             damage *= self.crit_x
             crit = True
             if self.crit_data:
@@ -448,10 +549,16 @@ class Player:
                 self.crit_data['Miss'] += 1
 
         parry_roll = uniform(0,1)
-        if parry_roll <= defender.crit_pct:
+        if parry_roll <= defender.crit_pct: #if defender mitigates damage
             if defender.crit_data:
                 defender.crit_data['Parry'] += 1
                 defender.crit_data['Mitigated'] += damage
+
+            if defender.trait_tag == 'R#':
+                temp_atkr = self
+                defender.reflect_damage(temp_atkr)
+                return False
+
             damage = 0
 
         else:
@@ -460,16 +567,24 @@ class Player:
         defender.health -= damage
         self.damage_data['Total-Damage'] += damage
         if defender.health <= 0:
-            defender.die()
-            self.damage_data['Overkill'] += abs(3 * defender.health)
-            self.damage_data['Overkill-Count'] += 1
-            defender.deaths += 1
-            if crit:
-                self.crit_kills += 1
-            self.kills += 1
-            self.kill_streak['Current'] += 1
-            self.delayed_atk = 0
-            return True
+            #game checks for defender life status after the attack function is over
+            undead_roll = uniform(0, 1)
+            if defender.trait_tag == 'U-' and undead_roll <= 0.3:
+                defender.damage_data['Healed'] += (defender.max_health / 2) - defender.health
+                defender.damage_data['Revived'] += 1
+                defender.health = (defender.max_health / 2)
+                return True
+            else:
+                defender.die()
+                self.damage_data['Overkill'] += abs(3 * defender.health)
+                self.damage_data['Overkill-Count'] += 1
+                defender.deaths += 1
+                if crit:
+                    self.crit_kills += 1
+                self.kills += 1
+                self.kill_streak['Current'] += 1
+                self.delayed_atk = 0
+                return True
         else:
             self.delayed_atk = 0
             return False
@@ -482,9 +597,20 @@ class Player:
             self.kill_streak['Peak'] = self.kill_streak['Current']
         self.kill_streak['Current'] = 0
 
-    def tesseract(self):
-        self.damage_data['Tesseract'] += self.power
-        return self.power
+    #These are variables coming from Game() passed when a player's trait is active.
+    #When nothing is passed, they default to 0.
+    def tesseract(self,clutch=False,inc=0,pp=0):
+        impact = self.power
+        if clutch:
+            impact *= self.trait_multiplier
+        elif inc != 0:
+            impact*=inc
+        elif pp != 0:
+            impact += pp
+
+
+        self.damage_data['Tesseract'] += impact
+        return np.round(impact)
 
     def respawn(self):
         self.health = self.max_health
