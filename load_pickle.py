@@ -6,6 +6,7 @@ def season_wipe(teams):
         team.losses = 0
         team.match_wins = 0
         team.match_losses = 0
+        team.match_draws = 0
         team.trophies = 0
         team.seed = -1
         team.margin = 0
@@ -22,7 +23,7 @@ def season_wipe(teams):
             player.kill_streak = {'Current' : 0, 'Peak' : 0}
             player.damage_data = {'Tesseract': 0.0, 'Total-Attacks': 0, 'Total-Damage': 0.0, 'Total-Delayed-Damage': 0.0,
                                 'Total-Delayed-X': 0.0, 'Delayed-Count': 0, 'Avg-Delayed-X': 0.0,
-                                'Avg-Delayed-Damage': 0.0, 'Overkill': 0.0, 'Overkill-Count': 0}
+                                'Avg-Delayed-Damage': 0.0, 'Overkill': 0.0, 'Overkill-Count': 0, 'Revived' : 0, 'Healed' : 0, 'Reflected' : 0.0, 'Reflect-Kills' : 0}
             total_games = player.games_played['All'] + player.games_played['This-Season']
             player.games_played = {'This-Season' : 0, 'All': total_games, 'Playoffs': 0, 'Matches' : 0}
             for key in player.damage_data.keys():
