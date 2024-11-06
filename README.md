@@ -1,5 +1,5 @@
 **How do I play CONTROL?**
-- Create and open your Codespace.
+- Create and open your Codespace by signing into GitHub, clicking on the green Code button in the top right, going to Codespace, and then starting a Codespace on main.
 - Go to the Terminal; after the $ sign, type 'pip install -r requirements.txt' (without quotes).
 - Open the file **control_main_true.py**
 - Click the three lines in the top left
